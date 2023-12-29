@@ -1,6 +1,8 @@
 import flet as ft
 from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination
 
+import wa_options
+
 def main(page: ft.Page):
     page.title = "Weather"
 
@@ -13,10 +15,7 @@ def main(page: ft.Page):
         page.views.append(
                 View(
                     "/settings",
-                    [
-                        AppBar(title=Text("Settings"), bgcolor=colors.BLACK),
-                        ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Change theme', color = ft.colors.WHITE),
-                    ],
+                    wa_options.settings(),
                 )
             )
         page.update()
