@@ -1,10 +1,13 @@
 import flet as ft
-from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination
+from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination, Container, IconButton
 
 import wa_options
+import wa_analyze
 
 def main(page: ft.Page):
     page.title = "Weather"
+    page.window_min_width = 1100
+    page.window_min_height = 600
 
     def check_item_clicked(e):
         e.control.checked = not e.control.checked
@@ -20,7 +23,22 @@ def main(page: ft.Page):
             )
         page.update()
 
+    def go_to_analyze(e):
+        page.go("/analyze")
+        page.views.append(
+                View(
+                    "/analyze",
+                    wa_analyze.analyze(),
+                )
+            )
+        page.update()
+
+    
+
+
+
     def route_change(route):
+        hgt = 75
         page.views.clear()
         page.views.append(
             View(
@@ -28,7 +46,7 @@ def main(page: ft.Page):
                 [
                     AppBar(
                         leading_width=40,
-                        title=Text("Weather app"),
+                        title=Text("Погода в г. Москва",color=ft.colors.PRIMARY, weight=ft.FontWeight.W_600),
                         center_title=False,
                         bgcolor=colors.SURFACE_VARIANT,
                         actions=[
@@ -37,19 +55,23 @@ def main(page: ft.Page):
                                     ElevatedButton(icon = ft.icons.SETTINGS, text = 'Settings', color = ft.colors.BLACK, on_click=go_to_settings),
                                     ft.PopupMenuItem(),
                                     ElevatedButton(icon = ft.icons.KEYBOARD_RETURN, text = 'Return', color = ft.colors.BLACK, on_click = check_item_clicked),
-                                ]
+                                ]   
                             ),
                         ],
                     ),
-                    ft.NavigationBar(
-                        destinations=[
-                            NavigationDestination(icon=ft.icons.KEYBOARD_RETURN_ROUNDED, label="Главное меню"),
-                            NavigationDestination(icon=ft.icons.BAR_CHART_ROUNDED, label="Анализ"),
-                            NavigationDestination(icon=ft.icons.SHOW_CHART_ROUNDED, label="Визуализация"),
-                            NavigationDestination(icon=ft.icons.WB_SUNNY_OUTLINED, label="Прогнозирование"),
-                            NavigationDestination(icon=ft.icons.MONITOR, label="Мониторинг"),
-                            NavigationDestination(icon=ft.icons.CLOUD_UPLOAD_OUTLINED, label="Загрузка файлов")
-                        ]
+                    ft.BottomAppBar(
+                        height=hgt,
+                        padding=0,
+                        content=ft.Row(controls=[
+                            ft.ElevatedButton(icon=ft.icons.HOME_ROUNDED, text="Главное меню", style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0)),expand=True,height=hgt,on_click=route_change),
+                            ft.ElevatedButton(icon=ft.icons.BAR_CHART_ROUNDED, text="Анализ", style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0)),expand=True,height=hgt,on_click=go_to_analyze),
+                            ft.ElevatedButton(icon=ft.icons.SHOW_CHART_ROUNDED, text="Визуализация", style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0)),expand=True,height=hgt),
+                            ft.ElevatedButton(icon=ft.icons.WB_SUNNY_OUTLINED, text="Прогнозирование", style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0)),expand=True,height=hgt),
+                            ft.ElevatedButton(icon=ft.icons.MONITOR, text="Мониторинг", style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0)),expand=True,height=hgt),
+                            ft.ElevatedButton(icon=ft.icons.CLOUD_UPLOAD_OUTLINED, text="Загрузка файлов", style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0)),expand=True,height=hgt),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_EVENLY
+                        )
                     ),
                 ],
             )
@@ -66,5 +88,4 @@ def main(page: ft.Page):
     page.on_view_pop = view_pop
     page.go(page.route)
 
-#123
 ft.app(target=main)
