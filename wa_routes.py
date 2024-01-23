@@ -1,7 +1,7 @@
 import flet as ft
 from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination
 
-
+import datetime
 
 
 class Routes():
@@ -17,16 +17,67 @@ class Routes():
     def __init__(self, page) -> None:
         
         self.page = page
+    
+    
+    # Search button  
+    
+    def search(self):
+        search_button = ft.ElevatedButton(
+            "Выбрать местоположение",
+            icon=ft.icons.CALENDAR_MONTH,
+            height = 75,
+            style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0), bgcolor=colors.SURFACE_VARIANT),
+        )
 
+        return search_button
+    
+      
+    # Date picker
+    
+    def date_change(self):
+        def change_date(e):
+            print(f"Date picker changed, value is {date_picker.value}")
+
+        def date_picker_dismissed(e):
+            print(f"Date picker dismissed, value is {date_picker.value}")
+
+        date_picker = ft.DatePicker(
+            on_change=change_date,
+            on_dismiss=date_picker_dismissed,
+            first_date=datetime.datetime(2023, 10, 1),
+            last_date=datetime.datetime(2024, 10, 1),
+        )
+
+        self.page.overlay.append(date_picker)
+
+        date_button = ft.ElevatedButton(
+            "Изменить дату",
+            icon=ft.icons.CALENDAR_MONTH,
+            height = 75,
+            style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0), bgcolor=colors.SURFACE_VARIANT),
+            on_click=lambda _: date_picker.pick_date(),
+        )
+
+        return date_button
+    
+    
     # AppBars
         
     def topAppBar(self, name:str)->AppBar:
         return AppBar(title=Text(name), bgcolor=colors.SURFACE_VARIANT,
-            actions = [
+            actions = [ft.Row(
+                    alignment = ft.MainAxisAlignment.CENTER,
+                    spacing = 2,
+                    controls = [ft.Container(width = 250, bgcolor = colors.SURFACE_VARIANT, 
+                                content=self.date_change()),
+                    ft.Container(width = 250, bgcolor = colors.SURFACE_VARIANT, 
+                                content=self.search()),
+                    
                     ft.PopupMenuButton(
                     items=[
                         ElevatedButton(icon = ft.icons.SETTINGS, text = 'Настройки', color = ft.colors.BLACK, on_click=self.go_to_settings),
                         ft.PopupMenuItem(),
+                    ]),
                     ]
                 ),
             ]
@@ -50,7 +101,7 @@ class Routes():
             invColor = ft.colors.PRIMARY_CONTAINER
             textColor = ft.colors.WHITE
 
-            normalColor = ft.colors.BLACK
+            normalColor = ft.colors.SURFACE_VARIANT
             normalTxtColor = ft.colors.WHITE
             
         buttons = [
@@ -75,9 +126,9 @@ class Routes():
                     )
                 )
         
-        return btmBar
-
-
+        return btmBar    
+    
+    
     def dotsPopupMenu(self):
         return ft.PopupMenuButton(
                             items=[
@@ -118,17 +169,12 @@ class Routes():
     # Monitoring and GOTO monitoring
 
     def monitor(self):
-        controls = [AppBar(
-                    leading_width=40,
-                    title=Text("Погода в городе " + "Москва", color=ft.colors.PRIMARY, weight=ft.FontWeight.W_600),
-                    center_title=False,
-                    bgcolor=colors.SURFACE_VARIANT,
-                    actions=[
-                        self.dotsPopupMenu()
-                    ],
-                ),
+        controls = [
+                self.topAppBar("Мониторинг"),
+            
                 self.bottomAppBar()
             ]
+    
         return controls
     
 
@@ -140,13 +186,15 @@ class Routes():
         self.page.update()
 
     # Analyze and GOTO analyze
-
+    
     def analyze(self):
+  
         controls = [
                 self.topAppBar("Анализ и виузализация"),
             
                 self.bottomAppBar()
             ]
+    
         return controls
 
     def go_to_analyze(self, e):
