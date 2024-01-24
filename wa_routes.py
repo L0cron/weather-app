@@ -1,10 +1,22 @@
 import flet as ft
 from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination
-
+import sqlite3
 import datetime
 
 
+
+
+
 class Routes():
+    # User login
+    email:str = None
+    password:str = None
+    logged_in:bool = False
+
+
+    # App variables
+
+    file_picker = ft.FilePicker()
 
     bottomABhgt = 75
 
@@ -15,8 +27,8 @@ class Routes():
     d_or_l:str = 'dark'
 
     def __init__(self, page) -> None:
-        
         self.page = page
+        self.page.overlay.append(self.file_picker)
     
     
     # Search button  
@@ -225,10 +237,83 @@ class Routes():
         self.page.update()
 
     # Upload and GOTO upload
+        
+    def connect_and_sign_in(self,email, password):
+        con = sqlite3.connect("./database.db")
+        cur = con.cursor()
+        found = cur.execute(f"""SELECT * FROM users WHERE email="{email}" AND password="{password}\"""").fetchone()
+        if found == None:
+            return False
+        else:
+            return True
+        
+    def login(self, e):
+        e.control.disabled = True
+        self.page.update()
+        got = self.connect_and_sign_in(self.email,self.password)
+        
+        e.control.disabled = False
+        self.page.update()
+
+        if got == True:
+            print("Login succeeded")
+            self.logged_in = True
+            self.goto(self.upload)
+        else:
+            print("Login failed")
+        
+
+    def email_change(self, e):
+        self.email = e.control.value
+    def pass_change(self, e):
+        self.password = e.control.value
+
+    def login_form(self):
+        
+        
+        
+        t1 = ft.TextField(label="Email",width=400,max_length=50, max_lines=1, on_change=self.email_change)
+        t2 = ft.TextField(label="Пароль", width=400, max_length=50, max_lines=1, password=True, can_reveal_password=True,on_change=self.pass_change)
+        return ft.Container(content=
+            ft.Column(controls=[
+                t1,
+                t2,
+                ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=ft.colors.PRIMARY_CONTAINER, text="Войти", on_click=self.login)
+            ]
+            ),
+            alignment=ft.alignment.center,
+            margin=ft.margin.all(25)
+        
+        )
+     
+    
+    def get_file_from_url(self, e):
+        return
+
+    def upload_form(self):
+        tp = ft.TextField(label='URL', width=700,max_lines=1,on_change=self.get_file_from_url)
+        return ft.Container(content=
+            ft.Column(controls=[
+                ft.ElevatedButton("Выберите файлы",on_click=lambda _: self.file_picker.pick_files(allow_multiple=False, allowed_extensions=["csv", "xlsx"])),
+                ft.Text("-- Или --"),
+                tp
+            ]),
+            alignment=ft.alignment.center
+        
+        )
 
     def upload(self):
+
+        form = self.login_form()
+
+        if self.logged_in == True:
+            form = self.upload_form()
+
         controls = [
                 self.topAppBar("Загрузка файлов"),
+
+                form,
+
                 self.bottomAppBar()
             ]
         return controls
@@ -244,7 +329,6 @@ class Routes():
     
 
     def goto(self, where):
-
         self.page.views.clear()
         self.page.views.append(
             View(
