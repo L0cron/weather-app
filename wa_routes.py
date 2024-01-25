@@ -2,7 +2,7 @@ import flet as ft
 from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination
 import sqlite3
 import datetime
-
+import requests
 
 
 
@@ -32,17 +32,102 @@ class Routes():
     
     
     # Search button  
+
+    city = 'Москва'
     
+    print1 = ft.Text('', size = 30, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
+    print2 = ft.Text('', size = 20,bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
+    print3 = ft.Text('', size = 25, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
+    print4 = ft.Text('', size = 25, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
+    print5 = ft.Text('', weight = ft.FontWeight.W_500,size = 30, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
+
+    
+    def dropdown_changed(self, e):
+
+        self.city = e.control.value
+
+        #self.page.update()
+
+        city = self.city
+        
+        url = 'https://api.openweathermap.org/data/2.5/weather?q='+city+'&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
+        
+        print(url)
+
+        weather_data = requests.get(url).json()
+
+        self.print1.value = '🌡️ Температура воздуха: '+ str(round(weather_data['main']['temp'])) + ' ℃'
+        self.print2.value  = '      Ощущается как: ' + str(round(weather_data['main']['feels_like'])) + ' ℃'
+        self.print3.value  = '📈 Давление: ' + str(round(weather_data['main']['pressure'])*0.75) + ' мм.рт.ст'
+        self.print4.value  = '💨 Скорость ветра: ' + str(round(weather_data['wind']['speed'])) + ' м/с'
+        self.print5.value  = 'ПОГОДА: ' + str(weather_data['weather'][0]['description']).upper()
+
+        
+        self.monitor()
+        self.page.update()
+
+
     def search(self):
-        search_button = ft.ElevatedButton(
-            "Выбрать местоположение",
-            icon=ft.icons.CALENDAR_MONTH,
-            height = 75,
-            style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0), bgcolor=colors.SURFACE_VARIANT),
+ 
+        #t = ft.Text(self.text)
+        dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18), hint_text='Выбрать населённый пункт',
+        on_change=self.dropdown_changed,
+        options=[
+            ft.dropdown.Option("Амстердам"),
+            ft.dropdown.Option("Архангельск"),
+            ft.dropdown.Option("Барселона"),
+            ft.dropdown.Option("Берлин"),
+            ft.dropdown.Option("Буэнос-Айрес"),
+            ft.dropdown.Option("Вашингтон"),
+            ft.dropdown.Option("Варшава"),
+            ft.dropdown.Option("Волгоград"),
+            ft.dropdown.Option("Воронеж"),
+            ft.dropdown.Option("Вена"),
+            ft.dropdown.Option("Детройт"),
+            ft.dropdown.Option("Иркутск"),
+            ft.dropdown.Option("Калининград"),
+            ft.dropdown.Option("Кёльн"),
+            ft.dropdown.Option("Копенгаген"),
+            ft.dropdown.Option("Лос-Анджелес"),
+            ft.dropdown.Option("Мадрид"),
+            ft.dropdown.Option("Мурманск"),
+            ft.dropdown.Option("Мюнхен"),
+            ft.dropdown.Option("Москва"),
+            ft.dropdown.Option("Неаполь"),
+            ft.dropdown.Option("Нижний Новгород"),
+            ft.dropdown.Option("Новосибирск"),
+            ft.dropdown.Option("Нью-Йорк"),
+            ft.dropdown.Option("Омск"),
+            ft.dropdown.Option("Оттава"),
+            ft.dropdown.Option("Париж"),
+            ft.dropdown.Option("Псков"),
+            ft.dropdown.Option("Пермь"),
+            ft.dropdown.Option("Рим"),
+            ft.dropdown.Option("Рио-де-Жанейро"),
+            ft.dropdown.Option("Ростов-на-Дону"),
+            ft.dropdown.Option("Сочи"),
+            ft.dropdown.Option("Сан-Франциско"),
+            ft.dropdown.Option("Санкт-Петербург"),
+            ft.dropdown.Option("Стамбул"),
+            ft.dropdown.Option("Томск"),
+            ft.dropdown.Option("Тегеран"),
+            ft.dropdown.Option("Торонто"),
+            ft.dropdown.Option("Углич"),
+           
+        ],
+        width=350,
         )
 
-        return search_button
-    
+        a = ft.Column(controls = [ft.Container(margin = 20, width = 2000, height = 70,
+                                               content = ft.Row(spacing = 80, controls = [dd, self.print5])),
+                                               ft.Container(margin = 20, content = ft.Column(spacing = 60,  controls = [ft.Column(controls =[self.print1, self.print2]),
+                                                      self.print3, self.print4]))
+                                                            ])
+                                                      
+        
+        
+
+        return a
       
     # Date picker
     
@@ -82,8 +167,7 @@ class Routes():
                     spacing = 2,
                     controls = [ft.Container(width = 250, bgcolor = colors.SURFACE_VARIANT, 
                                 content=self.date_change()),
-                    ft.Container(width = 250, bgcolor = colors.SURFACE_VARIANT, 
-                                content=self.search()),
+                    
                     
                     ft.PopupMenuButton(
                     items=[
@@ -183,7 +267,7 @@ class Routes():
     def monitor(self):
         controls = [
                 self.topAppBar("Мониторинг"),
-            
+                self.search(),
                 self.bottomAppBar()
             ]
     
