@@ -1,6 +1,5 @@
 import flet as ft
 from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination
-import sqlite3
 import datetime
 import requests
 
@@ -9,9 +8,8 @@ import requests
 
 class Routes():
     # User login
-    email:str = None
-    password:str = None
-    logged_in:bool = False
+    email:str = ''
+    password:str = ''
 
 
     # App variables
@@ -34,6 +32,13 @@ class Routes():
     # Search button  
 
     city = 'Москва'
+
+
+    temp = 0
+    feels_like = 0
+    pressure = 0
+    speed = 0
+    weather = ""
     
     print1 = ft.Text('', size = 30, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
     print2 = ft.Text('', size = 20,bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
@@ -60,7 +65,7 @@ class Routes():
         self.print2.value  = '      Ощущается как: ' + str(round(weather_data['main']['feels_like'])) + ' ℃'
         self.print3.value  = '📈 Давление: ' + str(round(weather_data['main']['pressure'])*0.75) + ' мм.рт.ст'
         self.print4.value  = '💨 Скорость ветра: ' + str(round(weather_data['wind']['speed'])) + ' м/с'
-        self.print5.value  = 'ПОГОДА: ' + str(weather_data['weather'][0]['description']).upper()
+        self.print5.value  = str(weather_data['weather'][0]['description'])
 
         
         self.monitor()
@@ -120,7 +125,7 @@ class Routes():
 
         a = ft.Column(controls = [ft.Container(margin = 20, width = 2000, height = 70,
                                                content = ft.Row(spacing = 80, controls = [dd, self.print5])),
-                                               ft.Container(margin = 20, content = ft.Column(spacing = 60,  controls = [ft.Column(controls =[self.print1, self.print2]),
+                                               ft.Container(margin = 10, content = ft.Column(spacing = 20,  controls = [ft.Column(controls =[self.print1, self.print2]),
                                                       self.print3, self.print4]))
                                                             ])
                                                       
@@ -161,6 +166,13 @@ class Routes():
     # AppBars
         
     def topAppBar(self, name:str)->AppBar:
+        login_button = ElevatedButton(icon = ft.icons.ACCOUNT_CIRCLE, text = 'Войти', color = ft.colors.BLACK, on_click=self.go_to_upload)
+
+        if self.login_status == 1:
+            login_button.text = "Выйти"
+            login_button.icon = ft.icons.LOGOUT
+            login_button.on_click = self.logout
+
         return AppBar(title=Text(name), bgcolor=colors.SURFACE_VARIANT,
             actions = [ft.Row(
                     alignment = ft.MainAxisAlignment.CENTER,
@@ -172,6 +184,7 @@ class Routes():
                     ft.PopupMenuButton(
                     items=[
                         ElevatedButton(icon = ft.icons.SETTINGS, text = 'Настройки', color = ft.colors.BLACK, on_click=self.go_to_settings),
+                        login_button,
                         ft.PopupMenuItem(),
                     ]),
                     ]
@@ -180,7 +193,21 @@ class Routes():
         )
     
         
+    def colorSchemes(self)->list:
+        invColor = ft.colors.PRIMARY
+        invTextColor = ft.colors.WHITE
+        
+        normalColor = ft.colors.SURFACE_VARIANT
+        normalTxtColor = ft.colors.PRIMARY
+        
+        if self.d_or_l == 'dark':
+            invColor = ft.colors.PRIMARY_CONTAINER
+            invTextColor = ft.colors.WHITE
 
+            normalColor = ft.colors.SURFACE_VARIANT
+            normalTxtColor = ft.colors.WHITE
+
+        return [normalColor, normalTxtColor, invColor, invTextColor]
 
     def bottomAppBar(self)->AppBar:
         hgt = self.bottomABhgt
@@ -323,15 +350,28 @@ class Routes():
     # Upload and GOTO upload
         
     def connect_and_sign_in(self,email, password):
-        con = sqlite3.connect("./database.db")
-        cur = con.cursor()
-        found = cur.execute(f"""SELECT * FROM users WHERE email="{email}" AND password="{password}\"""").fetchone()
-        if found == None:
-            return False
-        else:
-            return True
+        try:
+            re = requests.request(url='http://localhost:5000', method='GET', params={"email":email,"password":password})
+            response = str(re.content)[2:-1]
+            if response == 'success':
+                return 1
+            else:
+                return 0
+        except:
+            return -1
+        
+
+    def logout(self, e):
+        self.login_status = 0
+        
+        self.email = ''
+        self.password = ''
+
+        self.go_to_monitor(e)
         
     def login(self, e):
+        if self.email == '' or self.password == '':
+            return
         e.control.disabled = True
         self.page.update()
         got = self.connect_and_sign_in(self.email,self.password)
@@ -339,58 +379,93 @@ class Routes():
         e.control.disabled = False
         self.page.update()
 
-        if got == True:
-            print("Login succeeded")
-            self.logged_in = True
+        if got == -1:
+            print("Ошибка сервера")
+            self.login_status = -1
             self.goto(self.upload)
-        else:
-            print("Login failed")
+            
+        elif got == 0:
+            print("Неверный логин или пароль")
+            self.login_status = 2
+            self.goto(self.upload)
+        elif got == 1:
+            print("Успешный вход")
+            self.login_status = 1
+            self.goto(self.upload)
         
 
+    login_status = 0
+    # 0 - ничего
+    # 1 - успешно
+    # 2 - неверные данные
+    # -1 - ошибка сервера
+
     def email_change(self, e):
-        self.email = e.control.value
+        self.email = str(e.control.value)
     def pass_change(self, e):
-        self.password = e.control.value
+        self.password = str(e.control.value)
 
     def login_form(self):
         
-        
+        txt = ft.Text(text_align=ft.TextAlign.CENTER,width=400)
+        if self.login_status == -1:
+            txt.value = "Сервер не отвечает, попробуйте позже."
+            txt.color = ft.colors.RED
+        elif self.login_status == 2:
+            txt.value = "Неверный логин или пароль."
+            txt.color = ft.colors.RED
         
         t1 = ft.TextField(label="Email",width=400,max_length=50, max_lines=1, on_change=self.email_change)
         t2 = ft.TextField(label="Пароль", width=400, max_length=50, max_lines=1, password=True, can_reveal_password=True,on_change=self.pass_change)
-        return ft.Container(content=
+        return ft.Row(controls=[
             ft.Column(controls=[
                 t1,
                 t2,
-                ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=ft.colors.PRIMARY_CONTAINER, text="Войти", on_click=self.login)
+                ft.Row(controls=[
+                    ft.Column(controls=[
+                        ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=ft.colors.PRIMARY_CONTAINER, text="Войти", on_click=self.login, width=100),
+                        txt
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                ],
+                width=400,
+                alignment=ft.MainAxisAlignment.CENTER
+                )
             ]
-            ),
-            alignment=ft.alignment.center,
-            margin=ft.margin.all(25)
-        
-        )
+            )],
+            alignment=ft.MainAxisAlignment.CENTER,
+            )
      
     
+    file_upload_url = ''
     def get_file_from_url(self, e):
-        return
+        self.file_upload_url = e.control.value
 
     def upload_form(self):
-        tp = ft.TextField(label='URL', width=700,max_lines=1,on_change=self.get_file_from_url)
-        return ft.Container(content=
-            ft.Column(controls=[
-                ft.ElevatedButton("Выберите файлы",on_click=lambda _: self.file_picker.pick_files(allow_multiple=False, allowed_extensions=["csv", "xlsx"])),
-                ft.Text("-- Или --"),
-                tp
-            ]),
-            alignment=ft.alignment.center
+        tp = ft.TextField(label='URL', width=600,max_lines=1,on_change=self.get_file_from_url)
+        return ft.Column(controls=[
+                ft.ElevatedButton("Выберите файлы",on_click=lambda _: self.file_picker.pick_files(allow_multiple=False, allowed_extensions=["csv", "xlsx"]), style=ft.ButtonStyle(shape = ft.BeveledRectangleBorder(radius=0))),
+                ft.Divider(),
+                ft.Row(controls=[
+                    tp,
+                    ft.ElevatedButton("Выгрузить", style=ft.ButtonStyle(shape = ft.BeveledRectangleBorder(radius=0)), height=50, width=200)
+                ],
+                width=810,
+                spacing=10
+                )
+                
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            width=810
+            )
+            
         
-        )
-
+        
     def upload(self):
 
         form = self.login_form()
 
-        if self.logged_in == True:
+        if self.login_status == 1:
             form = self.upload_form()
 
         controls = [
