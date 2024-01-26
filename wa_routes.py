@@ -380,11 +380,15 @@ class Routes():
         self.page.update()
 
         if got == -1:
+            self.email = ''
+            self.password = ''
             print("Ошибка сервера")
             self.login_status = -1
             self.goto(self.upload)
             
         elif got == 0:
+            self.email = ''
+            self.password = ''
             print("Неверный логин или пароль")
             self.login_status = 2
             self.goto(self.upload)

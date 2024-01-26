@@ -6,7 +6,8 @@ app = Flask("Server")
 def connect_and_sign_in(email, password):
     con = sqlite3.connect("./database.db")
     cur = con.cursor()
-    found = cur.execute(f"""SELECT * FROM users WHERE email="{email}" AND password="{password}\"""").fetchone()
+    found = cur.execute(f"""SELECT * FROM users WHERE email=? AND password=?""",
+                        (email,password)).fetchone()
     if found == None:
         return False
     else:
