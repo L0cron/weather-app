@@ -7,6 +7,7 @@ import requests
 
 
 class Routes():
+    webserver_url = 'http://localhost:5000'
     # User login
     email:str = ''
     password:str = ''
@@ -14,7 +15,7 @@ class Routes():
 
     # App variables
 
-    file_picker = ft.FilePicker()
+    file_picker = None
 
     bottomABhgt = 75
 
@@ -26,7 +27,11 @@ class Routes():
 
     def __init__(self, page) -> None:
         self.page = page
+        self.file_picker = ft.FilePicker(on_result=self.on_dialog_result)
         self.page.overlay.append(self.file_picker)
+
+        self.file_picker_button.on_click = lambda _: self.file_picker.pick_files(allow_multiple=True, allowed_extensions=["csv", "xlsx"])
+
     
     
     # Search button  
@@ -351,7 +356,7 @@ class Routes():
         
     def connect_and_sign_in(self,email, password):
         try:
-            re = requests.request(url='http://localhost:5000', method='GET', params={"email":email,"password":password})
+            re = requests.request(url=self.webserver_url, method='GET', params={"email":email,"password":password})
             response = str(re.content)[2:-1]
             if response == 'success':
                 return 1
@@ -445,14 +450,47 @@ class Routes():
     def get_file_from_url(self, e):
         self.file_upload_url = e.control.value
 
+    file_picker_button = ft.ElevatedButton("Выберите файлы", style=ft.ButtonStyle(shape = ft.BeveledRectangleBorder(radius=0)))
+    file_upload_button = ft.ElevatedButton("Выгрузить", style=ft.ButtonStyle(shape = ft.BeveledRectangleBorder(radius=0)), height=50, width=200)
+
+    def on_dialog_result(self, e: ft.FilePickerResultEvent):
+        self.do_upload(files=e.files)
+
+    def do_upload(self, files:list=None, url:str=None):
+        if files == None and url == None:
+            return
+        self.file_picker_button.disabled = True
+        self.file_upload_button.disabled = True
+        self.page.update()
+
+        print("We are connecting to a website")
+        
+        nfiles = {}
+        for i in range(len(files)):
+            nfiles[f"file{i}"] = open(files[i].path, 'rb')
+
+        print(nfiles)
+
+        re = None
+        if files != None:
+            re = requests.request(url=self.webserver_url, method="post", files=nfiles)
+        elif url != None:
+            return
+        
+        re.content
+        
+        self.file_picker_button.disabled = False
+        self.file_upload_button.disabled = False
+        self.page.update()
+
     def upload_form(self):
         tp = ft.TextField(label='URL', width=600,max_lines=1,on_change=self.get_file_from_url)
         return ft.Column(controls=[
-                ft.ElevatedButton("Выберите файлы",on_click=lambda _: self.file_picker.pick_files(allow_multiple=False, allowed_extensions=["csv", "xlsx"]), style=ft.ButtonStyle(shape = ft.BeveledRectangleBorder(radius=0))),
+                self.file_picker_button,
                 ft.Divider(),
                 ft.Row(controls=[
                     tp,
-                    ft.ElevatedButton("Выгрузить", style=ft.ButtonStyle(shape = ft.BeveledRectangleBorder(radius=0)), height=50, width=200)
+                    self.file_upload_button
                 ],
                 width=810,
                 spacing=10

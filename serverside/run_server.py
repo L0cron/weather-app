@@ -1,7 +1,12 @@
 from flask import Flask, request, redirect, url_for, render_template, flash
 import sqlite3
 import requests
+import os
+import datetime
+
 app = Flask("Server")
+app.config['UPLOAD_FOLDER'] = "./uploads"
+ALLOWED_EXTENSIONS = {'csv', 'xlsx'}
 
 def connect_and_sign_in(email, password):
     con = sqlite3.connect("./database.db")
@@ -29,7 +34,9 @@ def download_file(url):
     req = requests.request(url=url, method='GET')
     req
 
-
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/", methods=['GET', 'POST'])
 def idnex():
@@ -42,6 +49,11 @@ def idnex():
             print(files)
         elif url != None:
             print(url)
+        print(len(files))
+        for i in range(len(files)):
+            if files[f"file{str(i)}"] and allowed_file(files[f"file{str(i)}"].filename):
+                files[f"file{str(i)}"].save(os.path.join(app.config['UPLOAD_FOLDER'], files[f"file{str(i)}"].filename))
+                print("File saved")
     else:
         if email == None or password == None:
             return "None"
