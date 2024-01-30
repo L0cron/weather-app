@@ -62,11 +62,10 @@ class Routes():
 
         city = self.city
         
-        url = 'https://api.openweathermap.org/data/2.5/weather?q='+city+'&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
+        #url = 'https://api.openweathermap.org/data/2.5/weather?q='+city+'&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
         
-        print(url)
 
-        weather_data = requests.get(url).json()
+        weather_data = requests.get(self.webserver_url+"?city="+self.city).json()
 
         # self.print1.value = '🌡️ Температура воздуха: '+ str(round(weather_data['main']['temp'])) + ' ℃'
         # self.print2.value  = '      Ощущается как: ' + str(round(weather_data['main']['feels_like'])) + ' ℃'
@@ -87,8 +86,9 @@ class Routes():
     def search(self):
  
         #t = ft.Text(self.text)
-        dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18), hint_text='Выбрать населённый пункт',
+        dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18), hint_text=self.city,
         on_change=self.dropdown_changed,
+        border=0,
         options=[
             ft.dropdown.Option("Амстердам"),
             ft.dropdown.Option("Архангельск"),
@@ -251,6 +251,7 @@ class Routes():
                     controls = [ft.Container(width = 250, bgcolor = colors.SURFACE_VARIANT, 
                                 content=self.date_change()),
                     
+                    self.search(),
                     
                     ft.PopupMenuButton(
                     items=[
@@ -365,7 +366,6 @@ class Routes():
     def monitor(self):
         controls = [
                 self.topAppBar("Мониторинг"),
-                self.search(),
                 self.cards(),
                 self.bottomAppBar()
             ]
