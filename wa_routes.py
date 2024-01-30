@@ -148,12 +148,14 @@ class Routes():
 
     tempTxt = ft.Text('', size = 30)
     tempfeelsTxt = ft.Text('', size = 20)
+    pressureTxt = ft.Text('', size = 20)
+    windTxt = ft.Text('', size = 20)
     def cards(self):
 
         self.tempTxt.value = 'Температура на данный момент равняется ' + self.temp + self.deg_cel
 
         tempCard = ft.Column(width = 3200, controls=[
-            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 35)
+            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 30)
         ],
         horizontal_alignment=ft.CrossAxisAlignment.START,
         alignment=ft.MainAxisAlignment.CENTER
@@ -181,34 +183,34 @@ class Routes():
         ]
         ))
 
-        '''
-        pressureTxt = 'Температура' + self.pressure + "мм рт. ст."
+        
+        self.pressureTxt.value = 'Давление равно ' + self.pressure + " мм рт. ст."
         
         pressureCard = ft.Card(content=ft.Column(controls=[
             ft.Icon(ft.icons.COMPRESS,color=ft.colors.PRIMARY, size=50),
-            ft.Text(pressureTxt, text_align=ft.TextAlign.CENTER)
+            ft.Text(self.pressureTxt.value, text_align=ft.TextAlign.CENTER,  size = 20)
         ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         alignment=ft.MainAxisAlignment.CENTER
-        ),width=100, height=100)
+        ),width=400, height=130)
 
 
 
-        windTxt = self.pressure + "м/c"
+        self.windTxt.value= 'Скорость ветра равна ' + self.pressure + " м/c"
         
         windCard = ft.Card(content=ft.Column(controls=[
             ft.Icon(ft.icons.WIND_POWER_OUTLINED,color=ft.colors.PRIMARY, size=50),
-            ft.Text(windTxt, text_align=ft.TextAlign.CENTER)
+            ft.Text(self.windTxt.value, text_align=ft.TextAlign.CENTER, size = 20)
         ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         alignment=ft.MainAxisAlignment.CENTER
-        ),width=100, height=100)
-        '''
+        ),width=400, height=130)
+        
 
 
-        d = ft.Column(controls=[temps,
+        d = ft.Column(controls=[temps, pressureCard, windCard
         ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.START,
         width=3200
         )
 
