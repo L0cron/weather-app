@@ -39,12 +39,14 @@ class Routes():
     city = 'Москва'
 
 
-    temp = 0
-    feels_like = 0
-    pressure = 0
-    speed = 0
+    temp = '0' # градусы цельсия
+    feels_like = '0' # градусы цельсия
+    pressure = '0' # мм рт. ст.
+    speed = '0' # м/c
     weather = ""
     
+    deg_cel = '℃'
+
     print1 = ft.Text('', size = 30, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
     print2 = ft.Text('', size = 20,bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
     print3 = ft.Text('', size = 25, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
@@ -66,12 +68,17 @@ class Routes():
 
         weather_data = requests.get(url).json()
 
-        self.print1.value = '🌡️ Температура воздуха: '+ str(round(weather_data['main']['temp'])) + ' ℃'
-        self.print2.value  = '      Ощущается как: ' + str(round(weather_data['main']['feels_like'])) + ' ℃'
-        self.print3.value  = '📈 Давление: ' + str(round(weather_data['main']['pressure'])*0.75) + ' мм.рт.ст'
-        self.print4.value  = '💨 Скорость ветра: ' + str(round(weather_data['wind']['speed'])) + ' м/с'
-        self.print5.value  = str(weather_data['weather'][0]['description'])
+        # self.print1.value = '🌡️ Температура воздуха: '+ str(round(weather_data['main']['temp'])) + ' ℃'
+        # self.print2.value  = '      Ощущается как: ' + str(round(weather_data['main']['feels_like'])) + ' ℃'
+        # self.print3.value  = '📈 Давление: ' + str(round(weather_data['main']['pressure'])*0.75) + ' мм.рт.ст'
+        # self.print4.value  = '💨 Скорость ветра: ' + str(round(weather_data['wind']['speed'])) + ' м/с'
+        # self.print5.value  = str(weather_data['weather'][0]['description'])
 
+        self.temp = str(round(weather_data['main']['temp']))
+        self.feels_like = str(round(weather_data['main']['feels_like']))
+        self.pressure = str(round(weather_data['main']['pressure'])*0.75)
+        self.speed = str(round(weather_data['wind']['speed']))
+        self.weather = str(weather_data['weather'][0]['description'])
         
         self.monitor()
         self.page.update()
@@ -128,17 +135,76 @@ class Routes():
         width=350,
         )
 
-        a = ft.Column(controls = [ft.Container(margin = 20, width = 2000, height = 70,
-                                               content = ft.Row(spacing = 80, controls = [dd, self.print5])),
-                                               ft.Container(margin = 10, content = ft.Column(spacing = 20,  controls = [ft.Column(controls =[self.print1, self.print2]),
-                                                      self.print3, self.print4]))
-                                                            ])
+        # a = ft.Column(controls = [ft.Container(margin = 20, width = 2000, height = 70,
+        #                                        content = ft.Row(spacing = 80, controls = [dd, self.print5])),
+        #                                        ft.Container(margin = 10, content = ft.Column(spacing = 20,  controls = [ft.Column(controls =[self.print1, self.print2]),
+        #                                               self.print3, self.print4]))
+        #                                                     ])
                                                       
         
         
 
-        return a
+        return dd
       
+    def cards(self):
+
+        tempTxt = self.temp + self.deg_cel
+
+        tempCard = ft.Card(content=ft.Column(controls=[
+            ft.Icon(ft.icons.THERMOSTAT,color=ft.colors.PRIMARY, size=50),
+            ft.Text(tempTxt, text_align=ft.TextAlign.CENTER)
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        alignment=ft.MainAxisAlignment.CENTER
+        ),width=100, height=100)
+
+        tempfeelsTxt = self.feels_like + self.deg_cel
+
+        tempfeelsCard = ft.Card(content=ft.Column(controls=[
+            ft.Text(tempfeelsTxt, text_align=ft.TextAlign.CENTER)
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        alignment=ft.MainAxisAlignment.CENTER
+        ),width=100, height=50)
+
+        temps = ft.Column(controls=[
+            tempCard,
+            tempfeelsCard
+        ],
+        spacing=10,
+        height=160,
+
+        )
+
+
+        pressureTxt = self.pressure + " мм рт. ст."
+        
+        pressCard = ft.Card(content=ft.Column(controls=[
+            ft.Icon(ft.icons.COMPRESS,color=ft.colors.PRIMARY, size=50),
+            ft.Text(pressureTxt, text_align=ft.TextAlign.CENTER)
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        alignment=ft.MainAxisAlignment.CENTER
+        ),width=100, height=100)
+
+
+        d = ft.Column(controls=[
+            ft.Row(controls=[
+                temps,
+                ft.Card(content=ft.Text("wtf", text_align=ft.TextAlign.CENTER),width=100, height=100)
+            ],spacing=10,
+            alignment=ft.MainAxisAlignment.CENTER
+            ),
+            ft.Card(content=ft.Text("wtf", text_align=ft.TextAlign.CENTER), width=320, height=100)
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        width=350
+        )
+
+
+        return d
+
+
     # Date picker
     
     def date_change(self):
@@ -300,6 +366,7 @@ class Routes():
         controls = [
                 self.topAppBar("Мониторинг"),
                 self.search(),
+                self.cards(),
                 self.bottomAppBar()
             ]
     
