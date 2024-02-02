@@ -250,6 +250,9 @@ class Routes():
     # AppBars
         
     def topAppBar(self, name:str)->AppBar:
+
+        
+
         login_button = ElevatedButton(icon = ft.icons.ACCOUNT_CIRCLE, text = 'Войти', color = ft.colors.BLACK, on_click=self.go_to_upload)
 
         if self.login_status == 1:
@@ -459,7 +462,7 @@ class Routes():
             return
         e.control.disabled = True
         self.page.update()
-        got = self.connect_and_sign_in(self.email,self.password)
+        got = self.connect_and_sign_in(str(self.email),str(self.password))
         
         e.control.disabled = False
         self.page.update()
@@ -495,7 +498,10 @@ class Routes():
         self.password = str(e.control.value)
 
     def login_form(self):
-        
+
+        base_color = ft.colors.PRIMARY_CONTAINER
+        if self.d_or_l != 'dark':
+            base_color = ft.colors.PRIMARY
         txt = ft.Text(text_align=ft.TextAlign.CENTER,width=400)
         if self.login_status == -1:
             txt.value = "Сервер не отвечает, попробуйте позже."
@@ -512,7 +518,7 @@ class Routes():
                 t2,
                 ft.Row(controls=[
                     ft.Column(controls=[
-                        ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=ft.colors.PRIMARY_CONTAINER, text="Войти", on_click=self.login, width=100),
+                        ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=base_color, text="Войти", on_click=self.login, width=100),
                         txt
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER)

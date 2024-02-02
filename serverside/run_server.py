@@ -12,7 +12,7 @@ def connect_and_sign_in(email, password):
     con = sqlite3.connect("./database.db")
     cur = con.cursor()
     found = cur.execute(f"""SELECT * FROM users WHERE email=? AND password=?""",
-                        (email,password)).fetchone()
+                        (email,password,)).fetchone()
     if found == None:
         return False
     else:
@@ -43,6 +43,7 @@ def idnex():
     email = request.args.get('email')
     password = request.args.get('password')
 
+    
     if request.method == "POST":
         url = request.args.get("url")
         files = request.files
@@ -56,10 +57,11 @@ def idnex():
                 files[f"file{str(i)}"].save(os.path.join(app.config['UPLOAD_FOLDER'], files[f"file{str(i)}"].filename))
                 print("File saved")
     else:
-        if email != None and password == None:
+        if email != None and password != None:
             
 
             valid = connect_and_sign_in(email,password)
+
             if valid:
                 return "success"
             else:
