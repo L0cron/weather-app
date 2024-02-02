@@ -82,7 +82,6 @@ class Routes():
         self.monitor()
         self.page.update()
 
-
     def search(self):
  
         #t = ft.Text(self.text)
@@ -145,60 +144,74 @@ class Routes():
         
 
         return dd
-      
+    
+
+    tempTxt = ft.Text('', size = 30)
+    tempfeelsTxt = ft.Text('', size = 20)
+    pressureTxt = ft.Text('', size = 20)
+    windTxt = ft.Text('', size = 20)
     def cards(self):
 
-        tempTxt = self.temp + self.deg_cel
+        self.tempTxt.value = 'Температура на данный момент равняется ' + self.temp + self.deg_cel
 
-        tempCard = ft.Card(content=ft.Column(controls=[
-            ft.Icon(ft.icons.THERMOSTAT,color=ft.colors.PRIMARY, size=50),
-            ft.Text(tempTxt, text_align=ft.TextAlign.CENTER)
+        tempCard = ft.Column(width = 3200, controls=[
+            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 30)
         ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.START,
         alignment=ft.MainAxisAlignment.CENTER
-        ),width=100, height=100)
+        )
 
-        tempfeelsTxt = self.feels_like + self.deg_cel
 
-        tempfeelsCard = ft.Card(content=ft.Column(controls=[
-            ft.Text(tempfeelsTxt, text_align=ft.TextAlign.CENTER)
+
+        self.tempfeelsTxt.value = 'Ощущается как ' + self.feels_like + self.deg_cel
+
+        tempfeelsCard = ft.Column(width = 3200, controls=[
+            ft.Text(self.tempfeelsTxt.value, text_align=ft.TextAlign.LEFT, size = 20)
         ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.START,
         alignment=ft.MainAxisAlignment.CENTER
-        ),width=100, height=50)
+        )
 
-        temps = ft.Column(controls=[
+        temps = ft.Card(content = ft.Row(controls = [ft.Icon(name=ft.icons.DEVICE_THERMOSTAT, size = 50), ft.Column( alignment = ft.MainAxisAlignment.CENTER,controls=[
             tempCard,
             tempfeelsCard
         ],
         spacing=10,
-        height=160,
-
-        )
-
-
-        pressureTxt = self.pressure + " мм рт. ст."
+        height=130,
         
-        pressCard = ft.Card(content=ft.Column(controls=[
+        )
+        ]
+        ))
+
+        
+        self.pressureTxt.value = 'Давление равно ' + self.pressure + " мм рт. ст."
+        
+        pressureCard = ft.Card(content=ft.Column(controls=[
             ft.Icon(ft.icons.COMPRESS,color=ft.colors.PRIMARY, size=50),
-            ft.Text(pressureTxt, text_align=ft.TextAlign.CENTER)
+            ft.Text(self.pressureTxt.value, text_align=ft.TextAlign.CENTER,  size = 20)
         ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         alignment=ft.MainAxisAlignment.CENTER
-        ),width=100, height=100)
+        ),width=400, height=130)
 
 
-        d = ft.Column(controls=[
-            ft.Row(controls=[
-                temps,
-                ft.Card(content=ft.Text("wtf", text_align=ft.TextAlign.CENTER),width=100, height=100)
-            ],spacing=10,
-            alignment=ft.MainAxisAlignment.CENTER
-            ),
-            ft.Card(content=ft.Text("wtf", text_align=ft.TextAlign.CENTER), width=320, height=100)
+
+        self.windTxt.value= 'Скорость ветра равна ' + self.pressure + " м/c"
+        
+        windCard = ft.Card(content=ft.Column(controls=[
+            ft.Icon(ft.icons.WIND_POWER_OUTLINED,color=ft.colors.PRIMARY, size=50),
+            ft.Text(self.windTxt.value, text_align=ft.TextAlign.CENTER, size = 20)
         ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        width=350
+        alignment=ft.MainAxisAlignment.CENTER
+        ),width=400, height=130)
+        
+
+
+        d = ft.Column(controls=[temps, pressureCard, windCard
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.START,
+        width=3200
         )
 
 
