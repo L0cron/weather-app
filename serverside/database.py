@@ -11,4 +11,8 @@ def init_db():
 
     cur.execute("CREATE TABLE IF NOT EXISTS write(id INTEGER PRIMARY KEY AUTOINCREMENT, date, time, city, temp, temp_feels_like, pressure, humidity, description, wind_direction, wind_speed, overcast)")
 
+
+    cur.execute("CREATE TABLE IF NOT EXISTS cities(id INTEGER PRIMARY KEY AUTOINCREMENT, station_name, city_index, city, latitude, longitude)")
+    cur.execute("CREATE TABLE IF NOT EXISTS news(id INTEGER PRIMARY KEY AUTOINCREMENT, rating, title, description)")
+    
 init_db()
