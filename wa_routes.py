@@ -172,7 +172,7 @@ class Routes():
         alignment=ft.MainAxisAlignment.CENTER
         )
 
-        temps = ft.Card(content = ft.Row(controls = [ft.Icon(name=ft.icons.DEVICE_THERMOSTAT, size = 50), ft.Column( alignment = ft.MainAxisAlignment.CENTER,controls=[
+        temps = ft.Card(content = ft.Row(controls = [ft.Icon(color=ft.colors.PRIMARY, name=ft.icons.DEVICE_THERMOSTAT, size = 50), ft.Column( alignment = ft.MainAxisAlignment.CENTER,controls=[
             tempCard,
             tempfeelsCard
         ],
@@ -397,12 +397,17 @@ class Routes():
         self.page.update()
 
     # Analyze and GOTO analyze
+        
+    def graphics(self):
+        items = ['вова лох']*20
+        col = ft.Column(controls=[ft.Text(value=i) for i in items])
+        return col
     
     def analyze(self):
   
         controls = [
                 self.topAppBar("Анализ и виузализация"),
-            
+                self.graphics(),
                 self.bottomAppBar()
             ]
     

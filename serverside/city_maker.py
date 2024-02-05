@@ -7,7 +7,7 @@ import ast
 import time
 
 
-cities = pd.read_csv("./cities.csv", index_col=0)
+cities = pd.read_csv("./serverside/cities.csv", index_col=0)
 
 
 
@@ -16,7 +16,7 @@ cities = cities[1:]
 cities.reset_index(inplace=True)
 cities.drop('index', axis=1, inplace=True)
 
-print(cities[:2])
+print(cities[:5])
 
 latitude = cities.широта
 longitude = cities.долгота
@@ -48,12 +48,24 @@ for j in range(len(rlatitude)):
     r = requests.get('https://nominatim.openstreetmap.org/reverse', params=geo)
 
 
+
     bytes_str = r.content
     dict_str = bytes_str.decode("UTF-8")
     mydata = ast.literal_eval(dict_str)
+
+    city = mydata['display_name'].split(', ')[0]
     print(mydata['display_name'])
     
-    all_cities.append(mydata['display_name'].split(', ')[0])
+    city_req = city.replace(' ', '&')
+    print(city_req)
+    r2 = requests.get('https://api.openweathermap.org/data/2.5/weather?q='+city_req+'&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347')
+    print(r2.content)
+    # all_cities.append(city)
+    # print("timed out: " + city)
+    # print("City not found: " + city)
+    
+    
+    
     time.sleep(1)
     if j == 3:
         break
