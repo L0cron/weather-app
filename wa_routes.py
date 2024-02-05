@@ -35,14 +35,7 @@ class Routes():
     
     
 
-    def close_banner(self):
-        self.banner.open = False
-        self.page.update()
 
-    
-    def show_banner(self):
-        self.banner.open = True
-        self.page.update()
     # Search button  
 
     city = 'Москва'
@@ -259,10 +252,22 @@ class Routes():
     
     
     # AppBars
-        
-    def topAppBar(self, name:str)->AppBar:
+    def close_banner(self):
+        self.banner.open = False
+        self.page.update()
 
+
+    is_banner_shown = False
+    def switch_banner(self, e):
+        if self.is_banner_shown == False:
+            self.is_banner_shown = True
+            print(self.is_banner_shown)
+
+        self.page.update()
         
+        
+         
+    def topAppBar(self, name:str)->AppBar:
 
         login_button = ElevatedButton(icon = ft.icons.ACCOUNT_CIRCLE, text = 'Войти', color = ft.colors.BLACK, on_click=self.go_to_upload)
 
@@ -279,7 +284,7 @@ class Routes():
                                 content=self.date_change()),
                     
                     self.search(),
-                    
+                    ft.IconButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED, on_click = self.switch_banner),
                     ft.PopupMenuButton(
                     items=[
                         ElevatedButton(icon = ft.icons.SETTINGS, text = 'Настройки', color = ft.colors.BLACK, on_click=self.go_to_settings),
@@ -357,7 +362,7 @@ class Routes():
                                 ElevatedButton(icon = ft.icons.SETTINGS, text = 'Настройки', color = ft.colors.BLACK, on_click=self.go_to_settings)
                             ]   
                         )
-
+    
     def go_to_settings(self, e):
         self.page.go("/settings")
         self.page.views.append(
@@ -366,7 +371,7 @@ class Routes():
                     [
                         AppBar(title=Text("Настройки"), bgcolor=colors.SURFACE_VARIANT),
                         ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Сменить тему', height = 50, width = 200, on_click = self.change_theme_),
-                        ElevatedButton(icon = ft.icons.NOTIFICATIONS_ACTIVE_ROUNDED, text = 'Уведомления', height = 50, width = 200)
+                        ft.Switch(label="Уведомления", value=True,thumb_color={ft.MaterialState.SELECTED: ft.colors.PRIMARY},track_color=ft.colors.SURFACE_VARIANT,focus_color=ft.colors.PURPLE)
                     ],
                 )
             )
@@ -402,8 +407,9 @@ class Routes():
             actions=[
                 ft.TextButton("Retry", on_click=self.close_banner)
             ],
-            open=True
+            open=self.is_banner_shown
         )
+        print('notify',self.is_banner_shown)
         return banner
 
     # Monitoring and GOTO monitoring
@@ -412,7 +418,6 @@ class Routes():
         controls = [
                 self.topAppBar("Мониторинг"),
                 self.cards(),
-                self.notify(),
                 self.bottomAppBar()
             ]
         
@@ -424,7 +429,6 @@ class Routes():
         if self.active_button != 0:
             self.active_button = 0
             self.goto(self.monitor)
-        self.show_banner()
         self.page.update()
 
     # Analyze and GOTO analyze
