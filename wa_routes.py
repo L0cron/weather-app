@@ -34,6 +34,15 @@ class Routes():
 
     
     
+
+    def close_banner(self):
+        self.banner.open = False
+        self.page.update()
+
+    
+    def show_banner(self):
+        self.banner.open = True
+        self.page.update()
     # Search button  
 
     city = 'Москва'
@@ -85,7 +94,7 @@ class Routes():
     def search(self):
  
         #t = ft.Text(self.text)
-        dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18), hint_text=self.city,
+        dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18, color = ft.colors.PRIMARY), hint_text=self.city,
         on_change=self.dropdown_changed,
         border=0,
         options=[
@@ -150,13 +159,15 @@ class Routes():
     tempfeelsTxt = ft.Text('', size = 20)
     pressureTxt = ft.Text('', size = 20)
     windTxt = ft.Text('', size = 20)
+
     def cards(self):
 
         self.tempTxt.value = 'Температура на данный момент равняется ' + self.temp + self.deg_cel
 
-        tempCard = ft.Column(width = 3200, controls=[
-            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 30)
-        ],
+
+
+        tempCard = ft.Column(width = 3200, controls = [
+            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 30)],
         horizontal_alignment=ft.CrossAxisAlignment.START,
         alignment=ft.MainAxisAlignment.CENTER
         )
@@ -354,7 +365,8 @@ class Routes():
                     "/settings", 
                     [
                         AppBar(title=Text("Настройки"), bgcolor=colors.SURFACE_VARIANT),
-                        ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Сменить тему', on_click = self.change_theme_),
+                        ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Сменить тему', height = 50, width = 200, on_click = self.change_theme_),
+                        ElevatedButton(icon = ft.icons.NOTIFICATIONS_ACTIVE_ROUNDED, text = 'Уведомления', height = 50, width = 200)
                     ],
                 )
             )
@@ -375,7 +387,24 @@ class Routes():
         e.control.checked = not e.control.checked
         self.page.update()
     # GOTO
-    
+
+
+    # Notify
+
+    def notify(self):
+        banner = ft.Banner(
+            bgcolor=ft.colors.PRIMARY,
+            leading=ft.Icon(ft.icons.WARNING_AMBER_ROUNDED, color=ft.colors.AMBER, size=40),
+            content=ft.Text(
+                "Oops, there were some errors while trying to delete the file. What would you like me to do?",
+                color = ft.colors.BLACK
+            ),
+            actions=[
+                ft.TextButton("Retry", on_click=self.close_banner)
+            ],
+            open=True
+        )
+        return banner
 
     # Monitoring and GOTO monitoring
 
@@ -383,9 +412,10 @@ class Routes():
         controls = [
                 self.topAppBar("Мониторинг"),
                 self.cards(),
+                self.notify(),
                 self.bottomAppBar()
             ]
-    
+        
         return controls
     
 
@@ -394,6 +424,7 @@ class Routes():
         if self.active_button != 0:
             self.active_button = 0
             self.goto(self.monitor)
+        self.show_banner()
         self.page.update()
 
     # Analyze and GOTO analyze
@@ -427,7 +458,6 @@ class Routes():
     def prediction(self):
         controls = [
                 self.topAppBar("Прогнозирование"),
-            
                 self.bottomAppBar()
             ]
         return controls
