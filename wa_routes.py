@@ -21,6 +21,7 @@ class Routes():
 
     active_button = 0
 
+    sb:ft.SnackBar = None
 
     page:ft.Page = None
     d_or_l:str = 'dark'
@@ -33,9 +34,12 @@ class Routes():
         self.file_picker_button.on_click = lambda _: self.file_picker.pick_files(allow_multiple=True, allowed_extensions=["csv", "xlsx"])
 
     
-    
-
-
+        self.sb = ft.SnackBar(
+            content=ft.Text("Hello, world!"),
+            action="Alright!",
+        )
+        self.page:ft.Page
+        
     # Search button  
 
     city = 'Москва'
@@ -363,6 +367,10 @@ class Routes():
                             ]   
                         )
     
+    notifications = True
+    def set_notifications(self, e:ft.ControlEvent):
+        self.notifications = e.control.value
+    
     def go_to_settings(self, e):
         self.page.go("/settings")
         self.page.views.append(
@@ -371,7 +379,7 @@ class Routes():
                     [
                         AppBar(title=Text("Настройки"), bgcolor=colors.SURFACE_VARIANT),
                         ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Сменить тему', height = 50, width = 200, on_click = self.change_theme_),
-                        ft.Switch(label="Уведомления", value=True,thumb_color={ft.MaterialState.SELECTED: ft.colors.PRIMARY},track_color=ft.colors.SURFACE_VARIANT,focus_color=ft.colors.PURPLE)
+                        ft.Switch(label="Уведомления", value=True,thumb_color=ft.colors.PRIMARY,track_color=ft.colors.SURFACE_VARIANT,on_change=self.set_notifications)
                     ],
                 )
             )
@@ -458,10 +466,26 @@ class Routes():
 
 
     # Prediction and GOTO prediction
+        
+    def notify_user(self,e):
+        if self.notifications == True:
+            
+            self.sb.open = True
+            self.page.update()
+        else:
+            print("У пользователя отключены уведомления")
+        
+    def predict_control(self):
+        control = ft.Column(controls=[
+            ft.ElevatedButton(text="Вызвать уведомление", on_click=self.notify_user)
+        ])
+
+        return control
 
     def prediction(self):
         controls = [
                 self.topAppBar("Прогнозирование"),
+                self.predict_control(),
                 self.bottomAppBar()
             ]
         return controls
@@ -685,7 +709,8 @@ class Routes():
         self.page.views.append(
             View(
                 "/",
-                func()
+                func(),
+                self.sb
         ))
         
         self.page.update()
