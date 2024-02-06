@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-df = pd.read_csv('./table.csv', index_col=0, header=1)
+df = pd.read_csv('./serverside/table.csv', index_col=0, header=1)
 
 def get_station_by_index(index:int):
 
@@ -10,3 +10,4 @@ def get_station_by_index(index:int):
     return one
 
 
+print(df)
