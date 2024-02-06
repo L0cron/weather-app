@@ -53,10 +53,12 @@ for j in range(len(rlatitude)):
     mydata = ast.literal_eval(dict_str)
     print(mydata['display_name'])
     
-    all_cities.append(mydata['display_name'].split(', ')[0])
+    all_cities.append(mydata['display_name'].split(', '))
     time.sleep(1)
     if j == 3:
         break
 
-print(all_cities)
-    
+
+ndf = pd.DataFrame()
+
+ndf.columns = ['station_name', 'city_index', 'displaye_name']
