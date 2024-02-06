@@ -370,6 +370,15 @@ class Routes():
     notifications = True
     def set_notifications(self, e:ft.ControlEvent):
         self.notifications = e.control.value
+
+    is_registering = False
+    def go_to_register(self, e):
+        self.login_status = 0
+        self.page.update()
+        if self.is_registering == False:
+            self.is_registering = True
+            self.goto(self.upload)
+        self.page.update()
     
     def go_to_settings(self, e):
         self.page.go("/settings")
@@ -449,7 +458,7 @@ class Routes():
     def analyze(self):
   
         controls = [
-                self.topAppBar("Анализ и виузализация"),
+                self.topAppBar("Анализ и визуализация"),
                 self.graphics(),
                 self.bottomAppBar()
             ]
@@ -554,11 +563,101 @@ class Routes():
     # 1 - успешно
     # 2 - неверные данные
     # -1 - ошибка сервера
+    # -2 - неверный формат данных email
+    # -3 - неверный фонрмат данных password
+    # -4 - пароли не совпадают
+    # -5 - данный пользователь уже существует
 
     def email_change(self, e):
         self.email = str(e.control.value)
     def pass_change(self, e):
         self.password = str(e.control.value)
+
+    def repeat_pass_change(self, e):
+        self.repeat_password = str(e.control.value)
+
+    def leave_register(self, e):
+        self.is_registering = False
+        self.email = ''
+        self.password = ''
+        self.repeat_password = ''
+        self.goto(self.upload)
+
+
+    def do_register(self, e):
+
+        email = self.email
+        password = self.password
+        rpass = self.repeat_password
+
+        if not ('@' in email and email.count('@') == 1):
+            self.login_status = -2
+            self.goto(self.upload)
+        elif not (len(password) >= 8) or not (len(rpass) >= 8):
+            self.login_status = -3
+            self.goto(self.upload)
+        elif not password == rpass:
+            self.login_status = -4
+            self.goto(self.upload)
+        
+        else:
+
+            check = 0 # TODO: check if user exists already
+    
+    repeat_password = ''
+    def register_form(self):
+        base_color = ft.colors.PRIMARY_CONTAINER
+        if self.d_or_l != 'dark':
+            base_color = ft.colors.PRIMARY
+
+        already_in = ft.Text(spans=[ft.TextSpan("Уже есть аккаунт?", on_click=self.leave_register, style=ft.TextStyle(color=ft.colors.PRIMARY,decoration=ft.TextDecoration.UNDERLINE))])
+
+
+        txt = ft.Text(text_align=ft.TextAlign.CENTER,width=400)
+        if self.login_status == -1:
+            txt.value = "Сервер не отвечает, попробуйте позже."
+            txt.color = ft.colors.RED
+        elif self.login_status == 2:
+            txt.value = "Неверный логин или пароль."
+            txt.color = ft.colors.RED
+        elif self.login_status == -2:
+            txt.value = "Email введён некорректно"
+            txt.color = ft.colors.RED
+        elif self.login_status == -3:
+            txt.value = "Пароль должен состоять минимум из 8 символов"
+            txt.color = ft.colors.RED
+        elif self.login_status == -4:
+            txt.value = 'Пароли не совпадают'
+            txt.color = ft.colors.RED
+        elif self.login_status == -5:
+            txt.value = "Пользователь уже зарегистрирован"
+            txt.color = ft.colors.BLUE
+
+
+        t1 = ft.TextField(label="Email",width=400,max_length=50, max_lines=1, on_change=self.email_change)
+        t2 = ft.TextField(label="Пароль", width=400, max_length=50, max_lines=1, password=True, can_reveal_password=True,on_change=self.pass_change)
+        t3 = ft.TextField(label="Повторите пароль", width=400, max_length=50, max_lines=1, password=True, can_reveal_password=True,on_change=self.repeat_pass_change)
+
+        return ft.Row(controls=[
+            ft.Column(controls=[
+                t1,
+                t2,
+                t3,
+                ft.Row(controls=[
+                    ft.Column(controls=[
+                        ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=base_color, text="Зарегистрироваться", on_click=self.do_register, width=200),
+                        already_in,
+                        txt
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                ],
+                width=400,
+                alignment=ft.MainAxisAlignment.CENTER
+                )
+            ]
+            )],
+            alignment=ft.MainAxisAlignment.CENTER,
+            )
 
     def login_form(self):
 
@@ -572,6 +671,8 @@ class Routes():
         elif self.login_status == 2:
             txt.value = "Неверный логин или пароль."
             txt.color = ft.colors.RED
+
+        register_text = ft.Text(spans=[ft.TextSpan("Зарегистрироваться", on_click=self.go_to_register, style=ft.TextStyle(color=ft.colors.PRIMARY,decoration=ft.TextDecoration.UNDERLINE))])
         
         t1 = ft.TextField(label="Email",width=400,max_length=50, max_lines=1, on_change=self.email_change)
         t2 = ft.TextField(label="Пароль", width=400, max_length=50, max_lines=1, password=True, can_reveal_password=True,on_change=self.pass_change)
@@ -582,6 +683,7 @@ class Routes():
                 ft.Row(controls=[
                     ft.Column(controls=[
                         ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=base_color, text="Войти", on_click=self.login, width=100),
+                        register_text,
                         txt
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER)
@@ -654,7 +756,12 @@ class Routes():
         
     def upload(self):
 
+
         form = self.login_form()
+
+    
+        if self.is_registering == True:
+            form = self.register_form()
 
         if self.login_status == 1:
             form = self.upload_form()
