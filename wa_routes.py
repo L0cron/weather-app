@@ -34,6 +34,8 @@ class Routes():
 
     
     
+
+
     # Search button  
 
     city = 'Москва'
@@ -85,7 +87,7 @@ class Routes():
     def search(self):
  
         #t = ft.Text(self.text)
-        dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18), hint_text=self.city,
+        dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18, color = ft.colors.PRIMARY), hint_text=self.city,
         on_change=self.dropdown_changed,
         border=0,
         options=[
@@ -150,13 +152,15 @@ class Routes():
     tempfeelsTxt = ft.Text('', size = 20)
     pressureTxt = ft.Text('', size = 20)
     windTxt = ft.Text('', size = 20)
+
     def cards(self):
 
         self.tempTxt.value = 'Температура на данный момент равняется ' + self.temp + self.deg_cel
 
-        tempCard = ft.Column(width = 3200, controls=[
-            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 30)
-        ],
+
+
+        tempCard = ft.Column(width = 3200, controls = [
+            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 30)],
         horizontal_alignment=ft.CrossAxisAlignment.START,
         alignment=ft.MainAxisAlignment.CENTER
         )
@@ -248,10 +252,22 @@ class Routes():
     
     
     # AppBars
-        
-    def topAppBar(self, name:str)->AppBar:
+    def close_banner(self):
+        self.banner.open = False
+        self.page.update()
 
+
+    is_banner_shown = False
+    def switch_banner(self, e):
+        if self.is_banner_shown == False:
+            self.is_banner_shown = True
+            print(self.is_banner_shown)
+
+        self.page.update()
         
+        
+         
+    def topAppBar(self, name:str)->AppBar:
 
         login_button = ElevatedButton(icon = ft.icons.ACCOUNT_CIRCLE, text = 'Войти', color = ft.colors.BLACK, on_click=self.go_to_upload)
 
@@ -268,7 +284,7 @@ class Routes():
                                 content=self.date_change()),
                     
                     self.search(),
-                    
+                    ft.IconButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED, on_click = self.switch_banner),
                     ft.PopupMenuButton(
                     items=[
                         ElevatedButton(icon = ft.icons.SETTINGS, text = 'Настройки', color = ft.colors.BLACK, on_click=self.go_to_settings),
@@ -346,7 +362,7 @@ class Routes():
                                 ElevatedButton(icon = ft.icons.SETTINGS, text = 'Настройки', color = ft.colors.BLACK, on_click=self.go_to_settings)
                             ]   
                         )
-
+    
     def go_to_settings(self, e):
         self.page.go("/settings")
         self.page.views.append(
@@ -354,7 +370,8 @@ class Routes():
                     "/settings", 
                     [
                         AppBar(title=Text("Настройки"), bgcolor=colors.SURFACE_VARIANT),
-                        ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Сменить тему', on_click = self.change_theme_),
+                        ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Сменить тему', height = 50, width = 200, on_click = self.change_theme_),
+                        ft.Switch(label="Уведомления", value=True,thumb_color={ft.MaterialState.SELECTED: ft.colors.PRIMARY},track_color=ft.colors.SURFACE_VARIANT,focus_color=ft.colors.PURPLE)
                     ],
                 )
             )
@@ -375,7 +392,25 @@ class Routes():
         e.control.checked = not e.control.checked
         self.page.update()
     # GOTO
-    
+
+
+    # Notify
+
+    def notify(self):
+        banner = ft.Banner(
+            bgcolor=ft.colors.PRIMARY,
+            leading=ft.Icon(ft.icons.WARNING_AMBER_ROUNDED, color=ft.colors.AMBER, size=40),
+            content=ft.Text(
+                "Oops, there were some errors while trying to delete the file. What would you like me to do?",
+                color = ft.colors.BLACK
+            ),
+            actions=[
+                ft.TextButton("Retry", on_click=self.close_banner)
+            ],
+            open=self.is_banner_shown
+        )
+        print('notify',self.is_banner_shown)
+        return banner
 
     # Monitoring and GOTO monitoring
 
@@ -385,7 +420,7 @@ class Routes():
                 self.cards(),
                 self.bottomAppBar()
             ]
-    
+        
         return controls
     
 
@@ -427,7 +462,6 @@ class Routes():
     def prediction(self):
         controls = [
                 self.topAppBar("Прогнозирование"),
-            
                 self.bottomAppBar()
             ]
         return controls
