@@ -18,7 +18,7 @@ def connect_and_sign_in(email, password):
     if found == None:
         return False
     else:
-        return True
+        return found
 
 
 def write_file_db(user_id, path):
@@ -73,7 +73,7 @@ def analyze():
     if email != None and password != None:
         valid = connect_and_sign_in(email,password)
 
-        if valid:
+        if valid != False:
             file = request.args.get("file")
             if file != None:
                 r = analyze_file("./"+file)
@@ -98,7 +98,13 @@ def idnex():
     password = request.args.get('password')
 
     
-    if request.method == "POST":
+    if request.method == "POST" and email != None and password != None:
+        valid = connect_and_sign_in(email,password)
+
+        if valid == False:
+            return "failed"
+
+
         url = request.args.get("url")
         files = request.files
         if files != None:
@@ -106,9 +112,17 @@ def idnex():
         elif url != None:
             print(url)
         print(len(files))
+
+        user_id = valid[0]
+        print(user_id)
+        return "Search"
+
         for i in range(len(files)):
             if files[f"file{str(i)}"] and allowed_file(files[f"file{str(i)}"].filename):
-                files[f"file{str(i)}"].save(os.path.join(app.config['UPLOAD_FOLDER'], files[f"file{str(i)}"].filename))
+                dat = str(int(datetime.datetime.utcnow().timestamp()))
+                path = os.path.join(app.config['UPLOAD_FOLDER'], files[f"file{str(i)}"].filename+"_"+dat)
+                files[f"file{str(i)}"].save(path)
+                write_file_db(path=path, user_id=user_id)
                 print("File saved")
     else:
         if email != None and password != None:
@@ -116,7 +130,7 @@ def idnex():
 
             valid = connect_and_sign_in(email,password)
 
-            if valid:
+            if valid != False:
                 return "success"
             else:
                 return "failed"

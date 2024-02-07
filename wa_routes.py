@@ -724,7 +724,15 @@ class Routes():
 
         re = None
         if files != None:
-            re = requests.request(url=self.webserver_url, method="post", files=nfiles)
+            re = requests.request(url=self.webserver_url, method="post", files=nfiles, params={"email":self.email,"password":self.password})
+            if re.content == 'failed':
+                self.email = ''
+                self.password = ''
+                print("Неверный логин или пароль")
+                self.login_status = 2
+                self.goto(self.upload)
+            else:
+                print("логгинг ин епт")
         elif url != None:
             return
         
@@ -786,6 +794,11 @@ class Routes():
     
 
     def goto(self, where):
+        if self.login_status != 1:
+            self.login_status = 0
+            self.email = ''
+            self.password = ''
+            self.repeat_password = ''
         self.page.views.clear()
         self.page.views.append(
             View(
