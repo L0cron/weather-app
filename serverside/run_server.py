@@ -24,13 +24,14 @@ def connect_and_sign_in(email, password):
 def write_file_db(user_id, path):
     con = sqlite3.connect("./database.db")
     cur = con.cursor()
-    cur.execute(f"""INSERT INTO data(user_id, path) VALUES({user_id}, {path})""")
+    cur.execute(f"""INSERT INTO data(user_id, path) VALUES(?, ?)""", (user_id, path,))
+    con.commit()
 
 def add_user_db(email, password):
     con = sqlite3.connect("./database.db")
     cur = con.cursor()
-    cur.execute(f"""INSERT INTO data(email, password) VALUES({email}, {password})""")
-
+    cur.execute(f"""INSERT INTO data(email, password) VALUES(?, ?)""", (email, password,))
+    con.commit
 
 def download_file(url):
     req = requests.request(url=url, method='GET')
@@ -54,8 +55,7 @@ def analyze_file(path:str):
         else:
             df = pd.read_excel(path, index_col=0)
 
-        for index,row in df.iterrows():
-            print(row)
+        columns = df.columns
         return 1
     except FileNotFoundError:
         return -1
@@ -93,7 +93,7 @@ def analyze():
         return "No login provided"
 
 @app.route("/", methods=['GET', 'POST'])
-def idnex():
+def innex():
     email = request.args.get('email')
     password = request.args.get('password')
 
@@ -113,17 +113,22 @@ def idnex():
             print(url)
         print(len(files))
 
-        user_id = valid[0]
-        print(user_id)
-        return "Search"
+        user_id = valid[1]
+
+        paths = []
 
         for i in range(len(files)):
             if files[f"file{str(i)}"] and allowed_file(files[f"file{str(i)}"].filename):
                 dat = str(int(datetime.datetime.utcnow().timestamp()))
-                path = os.path.join(app.config['UPLOAD_FOLDER'], files[f"file{str(i)}"].filename+"_"+dat)
+                path = os.path.join(app.config['UPLOAD_FOLDER'], dat+"_"+files[f"file{str(i)}"].filename)
                 files[f"file{str(i)}"].save(path)
+                paths.append(path)
                 write_file_db(path=path, user_id=user_id)
                 print("File saved")
+                
+        for j in paths:
+            analyze_file(j)
+        return "Success"
     else:
         if email != None and password != None:
             
