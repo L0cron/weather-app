@@ -19,7 +19,16 @@ def connect_and_sign_in(email, password):
         return False
     else:
         return found
-
+    
+def user_exists(email):
+    con = sqlite3.connect("./database.db")
+    cur = con.cursor()
+    found = cur.execute(f"""SELECT * FROM users WHERE email=?""",
+                        (email,)).fetchone()
+    if found == None:
+        return False
+    else:
+        return True
 
 def write_file_db(user_id, path):
     con = sqlite3.connect("./database.db")
@@ -30,8 +39,8 @@ def write_file_db(user_id, path):
 def add_user_db(email, password):
     con = sqlite3.connect("./database.db")
     cur = con.cursor()
-    cur.execute(f"""INSERT INTO data(email, password) VALUES(?, ?)""", (email, password,))
-    con.commit
+    cur.execute(f"""INSERT INTO users(email, password) VALUES(?, ?)""", (email, password,))
+    con.commit()
 
 def download_file(url):
     req = requests.request(url=url, method='GET')
@@ -96,6 +105,7 @@ def analyze():
 def innex():
     email = request.args.get('email')
     password = request.args.get('password')
+    rpass = request.args.get("rpassword")
 
     
     if request.method == "POST" and email != None and password != None:
@@ -130,7 +140,10 @@ def innex():
             analyze_file(j)
         return "Success"
     else:
-        if email != None and password != None:
+        if email != None and password != None and rpass != None:
+            add_user_db(email, password)
+            return "success"
+        elif email != None and password != None:
             
 
             valid = connect_and_sign_in(email,password)
@@ -139,6 +152,15 @@ def innex():
                 return "success"
             else:
                 return "failed"
+
+        elif email != None and password == None:
+
+            if_exists = user_exists(email)
+
+            if if_exists:
+                return "registered"
+            else:
+                return "None"
 
         else:
 
@@ -149,6 +171,13 @@ def innex():
 
             else:
                 return "None"
+
+
+
+@app.route('/files', methods=["GET"])
+def files():
+    email = request.args.get('email')
+    password = request.args.get('password')
 
 
 

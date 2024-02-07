@@ -3,12 +3,17 @@ import flet as ft
 from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination
 import datetime
 import requests
-
+import plotly.graph_objects as go
+import plotly.express as px
+import pandas as pd
+from flet.plotly_chart import PlotlyChart
 
 
 
 class Routes():
+
     webserver_url = 'http://localhost:5000'
+
     # User login
     email:str = ''
     password:str = ''
@@ -382,7 +387,7 @@ class Routes():
         self.page.update()
         if self.is_registering == False:
             self.is_registering = True
-            self.goto(self.upload)
+            self.goto(self.upload, True)
         self.page.update()
     
     def go_to_settings(self, e):
@@ -448,10 +453,47 @@ class Routes():
 
     # Analyze and GOTO analyze
         
+    # Graphics
+
     def graphics(self):
-        items = ['вова лох']*20
-        col = ft.Column(controls=[ft.Text(value=i) for i in items])
-        return col
+        def filter_(days):
+            days = list(date.split(' ') for date in days)
+            woof_days = []
+            for i in days:
+                a = i[1].replace('.', '-')
+                woof_days.append(a + ' ' + i[0])
+            return woof_days
+        anime = pd.read_csv('./serverside/sanya/1.csv', low_memory=False, index_col=0, sep=',')
+
+        days = filter_(anime['время'].values)
+        temperatures = anime['температура_воздуха_по_сухому_термометру'].values[:90:]
+        humidities = anime['относительная_влажность_воздуха'].values[:90:]
+        pressures = anime['атмосферное_давление_на_уровне_станции'].values[:90:]
+        datetime_objects = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
+
+        # Построение графика с использованием Plotly
+        fig = go.Figure()
+
+        # Добавляем график для температуры на ось Y1
+        fig.add_trace(go.Scatter(x=datetime_objects, y=temperatures, mode='lines', name='Температура', yaxis='y1'))
+
+        # Добавляем график для влажности на ось Y2
+        fig.add_trace(go.Scatter(x=datetime_objects, y=humidities, mode='lines', name='Влажность', yaxis='y2'))
+
+        # Добавляем график для давления на ось Y3
+        fig.add_trace(go.Scatter(x=datetime_objects, y=pressures, mode='lines', name='Давление', yaxis='y3'))
+
+        # Настройка меток осей и заголовка
+        fig.update_layout(title=None,
+                      yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
+                      yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                      yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                      xaxis=dict(title=None),
+                      height=900,  # Установка высоты графика
+                      width=1600)
+
+        self.page.add(PlotlyChart(fig, expand=True, isolated=False,))
+        return PlotlyChart(fig, expand=True, isolated=False,)
     
     def analyze(self):
   
@@ -512,6 +554,16 @@ class Routes():
         except:
             return -1
         
+    def check_if_user_exists(self,email):
+        try:
+            re = requests.request(url=self.webserver_url, method='GET', params={"email":email})
+            response = str(re.content)[2:-1]
+            if response == 'registered':
+                return 1
+            else:
+                return 0
+        except:
+            return -1
 
     def logout(self, e):
         self.login_status = 0
@@ -573,14 +625,30 @@ class Routes():
         self.email = ''
         self.password = ''
         self.repeat_password = ''
-        self.goto(self.upload)
+        self.goto(self.upload, True)
 
+    def add_user(self, email, password, rpass):
+        try:
+            re = requests.request(url=self.webserver_url, method='GET', params={"email":email,"password":password, "rpassword":rpass})
+            response = str(re.content)[2:-1]
+            if response == 'success':
+                return 1
+            else:
+                return 0
+        except:
+            return -1
 
     def do_register(self, e):
+        if self.email == '' or self.password == '' or self.repeat_password == '':
+            return
+        e.control.disabled = True
+        self.page.update()
 
         email = self.email
         password = self.password
         rpass = self.repeat_password
+
+        print(email,password,rpass)
 
         if not ('@' in email and email.count('@') == 1):
             self.login_status = -2
@@ -593,11 +661,26 @@ class Routes():
             self.goto(self.upload)
         
         else:
+            exists = self.check_if_user_exists(email)
+            if exists:
+                self.login_status = -5
+                self.goto(self.upload)
+            else:
+                response = self.add_user(email,password,rpass)
+                
+                if response == 1:
+                    self.login_status = 1
+                    self.is_registering = False
+                    self.goto(self.upload)
+                else:
+                    self.login_status = -1
+                    self.goto(self.upload)
 
-            check = 0 # TODO: check if user exists already
-    
+        e.control.disabled = False
+        self.page.update()
     repeat_password = ''
     def register_form(self):
+
         base_color = ft.colors.PRIMARY_CONTAINER
         if self.d_or_l != 'dark':
             base_color = ft.colors.PRIMARY
@@ -724,7 +807,7 @@ class Routes():
                 self.login_status = 2
                 self.goto(self.upload)
             else:
-                print("логгинг ин епт")
+                print("Выкладывание файлов")
         elif url != None:
             return
         
@@ -736,6 +819,8 @@ class Routes():
 
     def upload_form(self):
         tp = ft.TextField(label='URL', width=600,max_lines=1,on_change=self.get_file_from_url)
+        your_files = None
+        txt = ft.Text("Здесь пусто")
         return ft.Column(controls=[
                 self.file_picker_button,
                 ft.Divider(),
@@ -744,8 +829,12 @@ class Routes():
                     self.file_upload_button
                 ],
                 width=810,
-                spacing=10
-                )
+                spacing=10,
+                ),
+                
+                ft.Divider(),
+                ft.Text("Ваши файлы:"),
+                txt
                 
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -785,8 +874,8 @@ class Routes():
 
     
 
-    def goto(self, where):
-        if self.login_status != 1:
+    def goto(self, where, clear:bool=False):
+        if self.login_status != 1 and clear:
             self.login_status = 0
             self.email = ''
             self.password = ''
