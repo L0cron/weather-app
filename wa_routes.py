@@ -21,6 +21,7 @@ class Routes():
 
     active_button = 0
 
+    sb:ft.SnackBar = None
 
     page:ft.Page = None
     d_or_l:str = 'dark'
@@ -33,7 +34,12 @@ class Routes():
         self.file_picker_button.on_click = lambda _: self.file_picker.pick_files(allow_multiple=True, allowed_extensions=["csv", "xlsx"])
 
     
-    
+        self.sb = ft.SnackBar(
+            content=ft.Text("Hello, world!"),
+            action="Alright!",
+        )
+        self.page:ft.Page
+        
     # Search button  
 
     city = 'Москва'
@@ -85,7 +91,7 @@ class Routes():
     def search(self):
  
         #t = ft.Text(self.text)
-        dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18), hint_text=self.city,
+        dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18, color = ft.colors.PRIMARY), hint_text=self.city,
         on_change=self.dropdown_changed,
         border=0,
         options=[
@@ -150,13 +156,15 @@ class Routes():
     tempfeelsTxt = ft.Text('', size = 20)
     pressureTxt = ft.Text('', size = 20)
     windTxt = ft.Text('', size = 20)
+
     def cards(self):
 
         self.tempTxt.value = 'Температура на данный момент равняется ' + self.temp + self.deg_cel
 
-        tempCard = ft.Column(width = 3200, controls=[
-            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 30)
-        ],
+
+
+        tempCard = ft.Column(width = 3200, controls = [
+            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 30)],
         horizontal_alignment=ft.CrossAxisAlignment.START,
         alignment=ft.MainAxisAlignment.CENTER
         )
@@ -172,7 +180,7 @@ class Routes():
         alignment=ft.MainAxisAlignment.CENTER
         )
 
-        temps = ft.Card(content = ft.Row(controls = [ft.Icon(name=ft.icons.DEVICE_THERMOSTAT, size = 50), ft.Column( alignment = ft.MainAxisAlignment.CENTER,controls=[
+        temps = ft.Card(content = ft.Row(controls = [ft.Icon(color=ft.colors.PRIMARY, name=ft.icons.DEVICE_THERMOSTAT, size = 50), ft.Column( alignment = ft.MainAxisAlignment.CENTER,controls=[
             tempCard,
             tempfeelsCard
         ],
@@ -248,8 +256,23 @@ class Routes():
     
     
     # AppBars
+    def close_banner(self):
+        self.banner.open = False
+        self.page.update()
+
+
+    is_banner_shown = False
+    def switch_banner(self, e):
+        if self.is_banner_shown == False:
+            self.is_banner_shown = True
+            print(self.is_banner_shown)
+
+        self.page.update()
         
+        
+         
     def topAppBar(self, name:str)->AppBar:
+
         login_button = ElevatedButton(icon = ft.icons.ACCOUNT_CIRCLE, text = 'Войти', color = ft.colors.BLACK, on_click=self.go_to_upload)
 
         if self.login_status == 1:
@@ -265,7 +288,7 @@ class Routes():
                                 content=self.date_change()),
                     
                     self.search(),
-                    
+                    ft.IconButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED, on_click = self.switch_banner),
                     ft.PopupMenuButton(
                     items=[
                         ElevatedButton(icon = ft.icons.SETTINGS, text = 'Настройки', color = ft.colors.BLACK, on_click=self.go_to_settings),
@@ -343,7 +366,20 @@ class Routes():
                                 ElevatedButton(icon = ft.icons.SETTINGS, text = 'Настройки', color = ft.colors.BLACK, on_click=self.go_to_settings)
                             ]   
                         )
+    
+    notifications = True
+    def set_notifications(self, e:ft.ControlEvent):
+        self.notifications = e.control.value
 
+    is_registering = False
+    def go_to_register(self, e):
+        self.login_status = 0
+        self.page.update()
+        if self.is_registering == False:
+            self.is_registering = True
+            self.goto(self.upload)
+        self.page.update()
+    
     def go_to_settings(self, e):
         self.page.go("/settings")
         self.page.views.append(
@@ -351,7 +387,8 @@ class Routes():
                     "/settings", 
                     [
                         AppBar(title=Text("Настройки"), bgcolor=colors.SURFACE_VARIANT),
-                        ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Сменить тему', on_click = self.change_theme_),
+                        ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Сменить тему', height = 50, width = 200, on_click = self.change_theme_),
+                        ft.Switch(label="Уведомления", value=True,thumb_color=ft.colors.PRIMARY,track_color=ft.colors.SURFACE_VARIANT,on_change=self.set_notifications)
                     ],
                 )
             )
@@ -372,7 +409,25 @@ class Routes():
         e.control.checked = not e.control.checked
         self.page.update()
     # GOTO
-    
+
+
+    # Notify
+
+    def notify(self):
+        banner = ft.Banner(
+            bgcolor=ft.colors.PRIMARY,
+            leading=ft.Icon(ft.icons.WARNING_AMBER_ROUNDED, color=ft.colors.AMBER, size=40),
+            content=ft.Text(
+                "Oops, there were some errors while trying to delete the file. What would you like me to do?",
+                color = ft.colors.BLACK
+            ),
+            actions=[
+                ft.TextButton("Retry", on_click=self.close_banner)
+            ],
+            open=self.is_banner_shown
+        )
+        print('notify',self.is_banner_shown)
+        return banner
 
     # Monitoring and GOTO monitoring
 
@@ -382,7 +437,7 @@ class Routes():
                 self.cards(),
                 self.bottomAppBar()
             ]
-    
+        
         return controls
     
 
@@ -394,12 +449,17 @@ class Routes():
         self.page.update()
 
     # Analyze and GOTO analyze
+        
+    def graphics(self):
+        items = ['вова лох']*20
+        col = ft.Column(controls=[ft.Text(value=i) for i in items])
+        return col
     
     def analyze(self):
   
         controls = [
-                self.topAppBar("Анализ и виузализация"),
-            
+                self.topAppBar("Анализ и визуализация"),
+                self.graphics(),
                 self.bottomAppBar()
             ]
     
@@ -415,11 +475,26 @@ class Routes():
 
 
     # Prediction and GOTO prediction
+        
+    def notify_user(self,e):
+        if self.notifications == True:
+            
+            self.sb.open = True
+            self.page.update()
+        else:
+            print("У пользователя отключены уведомления")
+        
+    def predict_control(self):
+        control = ft.Column(controls=[
+            ft.ElevatedButton(text="Вызвать уведомление", on_click=self.notify_user)
+        ])
+
+        return control
 
     def prediction(self):
         controls = [
                 self.topAppBar("Прогнозирование"),
-            
+                self.predict_control(),
                 self.bottomAppBar()
             ]
         return controls
@@ -459,7 +534,7 @@ class Routes():
             return
         e.control.disabled = True
         self.page.update()
-        got = self.connect_and_sign_in(self.email,self.password)
+        got = self.connect_and_sign_in(str(self.email),str(self.password))
         
         e.control.disabled = False
         self.page.update()
@@ -488,14 +563,56 @@ class Routes():
     # 1 - успешно
     # 2 - неверные данные
     # -1 - ошибка сервера
+    # -2 - неверный формат данных email
+    # -3 - неверный фонрмат данных password
+    # -4 - пароли не совпадают
+    # -5 - данный пользователь уже существует
 
     def email_change(self, e):
         self.email = str(e.control.value)
     def pass_change(self, e):
         self.password = str(e.control.value)
 
-    def login_form(self):
+    def repeat_pass_change(self, e):
+        self.repeat_password = str(e.control.value)
+
+    def leave_register(self, e):
+        self.is_registering = False
+        self.email = ''
+        self.password = ''
+        self.repeat_password = ''
+        self.goto(self.upload)
+
+
+    def do_register(self, e):
+
+        email = self.email
+        password = self.password
+        rpass = self.repeat_password
+
+        if not ('@' in email and email.count('@') == 1):
+            self.login_status = -2
+            self.goto(self.upload)
+        elif not (len(password) >= 8) or not (len(rpass) >= 8):
+            self.login_status = -3
+            self.goto(self.upload)
+        elif not password == rpass:
+            self.login_status = -4
+            self.goto(self.upload)
         
+        else:
+
+            check = 0 # TODO: check if user exists already
+    
+    repeat_password = ''
+    def register_form(self):
+        base_color = ft.colors.PRIMARY_CONTAINER
+        if self.d_or_l != 'dark':
+            base_color = ft.colors.PRIMARY
+
+        already_in = ft.Text(spans=[ft.TextSpan("Уже есть аккаунт?", on_click=self.leave_register, style=ft.TextStyle(color=ft.colors.PRIMARY,decoration=ft.TextDecoration.UNDERLINE))])
+
+
         txt = ft.Text(text_align=ft.TextAlign.CENTER,width=400)
         if self.login_status == -1:
             txt.value = "Сервер не отвечает, попробуйте позже."
@@ -503,6 +620,59 @@ class Routes():
         elif self.login_status == 2:
             txt.value = "Неверный логин или пароль."
             txt.color = ft.colors.RED
+        elif self.login_status == -2:
+            txt.value = "Email введён некорректно"
+            txt.color = ft.colors.RED
+        elif self.login_status == -3:
+            txt.value = "Пароль должен состоять минимум из 8 символов"
+            txt.color = ft.colors.RED
+        elif self.login_status == -4:
+            txt.value = 'Пароли не совпадают'
+            txt.color = ft.colors.RED
+        elif self.login_status == -5:
+            txt.value = "Пользователь уже зарегистрирован"
+            txt.color = ft.colors.BLUE
+
+
+        t1 = ft.TextField(label="Email",width=400,max_length=50, max_lines=1, on_change=self.email_change)
+        t2 = ft.TextField(label="Пароль", width=400, max_length=50, max_lines=1, password=True, can_reveal_password=True,on_change=self.pass_change)
+        t3 = ft.TextField(label="Повторите пароль", width=400, max_length=50, max_lines=1, password=True, can_reveal_password=True,on_change=self.repeat_pass_change)
+
+        return ft.Row(controls=[
+            ft.Column(controls=[
+                t1,
+                t2,
+                t3,
+                ft.Row(controls=[
+                    ft.Column(controls=[
+                        ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=base_color, text="Зарегистрироваться", on_click=self.do_register, width=200),
+                        already_in,
+                        txt
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                ],
+                width=400,
+                alignment=ft.MainAxisAlignment.CENTER
+                )
+            ]
+            )],
+            alignment=ft.MainAxisAlignment.CENTER,
+            )
+
+    def login_form(self):
+
+        base_color = ft.colors.PRIMARY_CONTAINER
+        if self.d_or_l != 'dark':
+            base_color = ft.colors.PRIMARY
+        txt = ft.Text(text_align=ft.TextAlign.CENTER,width=400)
+        if self.login_status == -1:
+            txt.value = "Сервер не отвечает, попробуйте позже."
+            txt.color = ft.colors.RED
+        elif self.login_status == 2:
+            txt.value = "Неверный логин или пароль."
+            txt.color = ft.colors.RED
+
+        register_text = ft.Text(spans=[ft.TextSpan("Зарегистрироваться", on_click=self.go_to_register, style=ft.TextStyle(color=ft.colors.PRIMARY,decoration=ft.TextDecoration.UNDERLINE))])
         
         t1 = ft.TextField(label="Email",width=400,max_length=50, max_lines=1, on_change=self.email_change)
         t2 = ft.TextField(label="Пароль", width=400, max_length=50, max_lines=1, password=True, can_reveal_password=True,on_change=self.pass_change)
@@ -512,7 +682,8 @@ class Routes():
                 t2,
                 ft.Row(controls=[
                     ft.Column(controls=[
-                        ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=ft.colors.PRIMARY_CONTAINER, text="Войти", on_click=self.login, width=100),
+                        ft.ElevatedButton(color=ft.colors.WHITE, bgcolor=base_color, text="Войти", on_click=self.login, width=100),
+                        register_text,
                         txt
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER)
@@ -553,7 +724,15 @@ class Routes():
 
         re = None
         if files != None:
-            re = requests.request(url=self.webserver_url, method="post", files=nfiles)
+            re = requests.request(url=self.webserver_url, method="post", files=nfiles, params={"email":self.email,"password":self.password})
+            if re.content == 'failed':
+                self.email = ''
+                self.password = ''
+                print("Неверный логин или пароль")
+                self.login_status = 2
+                self.goto(self.upload)
+            else:
+                print("логгинг ин епт")
         elif url != None:
             return
         
@@ -585,7 +764,12 @@ class Routes():
         
     def upload(self):
 
+
         form = self.login_form()
+
+    
+        if self.is_registering == True:
+            form = self.register_form()
 
         if self.login_status == 1:
             form = self.upload_form()
@@ -610,6 +794,11 @@ class Routes():
     
 
     def goto(self, where):
+        if self.login_status != 1:
+            self.login_status = 0
+            self.email = ''
+            self.password = ''
+            self.repeat_password = ''
         self.page.views.clear()
         self.page.views.append(
             View(
@@ -640,7 +829,8 @@ class Routes():
         self.page.views.append(
             View(
                 "/",
-                func()
+                func(),
+                self.sb
         ))
         
         self.page.update()
