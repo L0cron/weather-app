@@ -221,13 +221,22 @@ class Routes():
         alignment=ft.MainAxisAlignment.CENTER
         ),width=400, height=130)
         
-
-
-        d = ft.Column(controls=[temps, pressureCard, windCard
+        dateCard = ft.Card(content=ft.Row(controls=[ft.Text('  '),
+            ft.Icon(ft.icons.ACCESS_TIME,color=ft.colors.PRIMARY, size=50),
+            ft.Text('Актуально на ...', text_align=ft.TextAlign.LEFT, size = 30)
         ],
+        alignment = ft.MainAxisAlignment.START
+        ),width=600, height=130)
+
+
+        d = ft.Column(controls=[temps,
+                                ft.Row(controls=
+                                [pressureCard,
+                                dateCard]),
+                                 windCard],
         horizontal_alignment=ft.CrossAxisAlignment.START,
-        width=3200
-        )
+        width=3200)
+        
 
 
         return d
@@ -464,12 +473,26 @@ class Routes():
                 woof_days.append(a + ' ' + i[0])
             return woof_days
         anime = pd.read_csv('./serverside/sanya/1.csv', low_memory=False, index_col=0, sep=',')
-
+        anime2 = pd.read_csv('./serverside/sanya/2.csv', low_memory=False, index_col=0, sep=',')
+        anime3 = pd.read_csv('./serverside/sanya/3.csv', low_memory=False, index_col=0, sep=',')
+        
         days = filter_(anime['время'].values)
         temperatures = anime['температура_воздуха_по_сухому_термометру'].values[:90:]
         humidities = anime['относительная_влажность_воздуха'].values[:90:]
         pressures = anime['атмосферное_давление_на_уровне_станции'].values[:90:]
         datetime_objects = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
+        
+        days2= filter_(anime2['время'].values)
+        temperatures2 = anime2['температура_воздуха_по_сухому_термометру'].values[:90:]
+        humidities2 = anime2['относительная_влажность_воздуха'].values[:90:]
+        pressures2 = anime2['атмосферное_давление_на_уровне_станции'].values[:90:]
+        datetime_objects2 = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
+        
+        days3= filter_(anime3['время'].values)
+        temperatures3 = anime3['температура_воздуха_по_сухому_термометру'].values[:90:]
+        humidities3 = anime3['относительная_влажность_воздуха'].values[:90:]
+        pressures3 = anime3['атмосферное_давление_на_уровне_станции'].values[:90:]
+        datetime_objects3 = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
 
         # Построение графика с использованием Plotly
         fig = go.Figure()
@@ -489,11 +512,60 @@ class Routes():
                       yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
                       yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
                       xaxis=dict(title=None),
-                      height=900,  # Установка высоты графика
-                      width=1600)
+                      height=300,  # Установка высоты графика
+                      width=400)
+        
+                # Построение графика с использованием Plotly
+        fig2 = go.Figure()
 
-        self.page.add(PlotlyChart(fig, expand=True, isolated=False,))
-        return PlotlyChart(fig, expand=True, isolated=False,)
+        # Добавляем график для температуры на ось Y1
+        fig2.add_trace(go.Scatter(x=datetime_objects2, y=temperatures2, mode='lines', name='Температура', yaxis='y1'))
+
+        # Добавляем график для влажности на ось Y2
+        fig2.add_trace(go.Scatter(x=datetime_objects2, y=humidities2, mode='lines', name='Влажность', yaxis='y2'))
+
+        # Добавляем график для давления на ось Y3
+        fig2.add_trace(go.Scatter(x=datetime_objects2, y=pressures2, mode='lines', name='Давление', yaxis='y3'))
+
+        # Настройка меток осей и заголовка
+        fig2.update_layout(title=None,
+                      yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
+                      yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                      yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                      xaxis=dict(title=None),
+                      height=300,  # Установка высоты графика
+                      width=400)
+        fig3 = go.Figure()
+
+        # Добавляем график для температуры на ось Y1
+        fig3.add_trace(go.Scatter(x=datetime_objects3, y=temperatures3, mode='lines', name='Температура', yaxis='y1'))
+
+        # Добавляем график для влажности на ось Y2
+        fig3.add_trace(go.Scatter(x=datetime_objects3, y=humidities3, mode='lines', name='Влажность', yaxis='y2'))
+
+        # Добавляем график для давления на ось Y3
+        fig3.add_trace(go.Scatter(x=datetime_objects3, y=pressures3, mode='lines', name='Давление', yaxis='y3'))
+
+        # Настройка меток осей и заголовка
+        fig3.update_layout(title=None,
+                      yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
+                      yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                      yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                      xaxis=dict(title=None),
+                      height=300,  # Установка высоты графика
+                      width=400)
+        self.page.add(PlotlyChart(fig, expand=False, isolated=False,))
+        self.page.add(PlotlyChart(fig2, expand=False, isolated=False,))
+        self.page.add(PlotlyChart(fig3, expand=False, isolated=False,))
+        self.page.update()
+        
+        return ft.Row(controls=[PlotlyChart(fig, expand=True, isolated=False,), PlotlyChart(fig3, expand=True, isolated=False,), PlotlyChart(fig2, expand=True, isolated=False,)],
+                     )
+        
+
+
+    
+    
     
     def analyze(self):
   
