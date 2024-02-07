@@ -1,3 +1,4 @@
+import time
 import flet as ft
 from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination
 import datetime
@@ -36,7 +37,8 @@ class Routes():
     
         self.sb = ft.SnackBar(
             content=ft.Text("Hello, world!"),
-            action="Alright!",
+            action=ft.IconButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED, on_click = self.close_banner),
+            duration=1
         )
         self.page:ft.Page
         
@@ -257,17 +259,20 @@ class Routes():
     
     # AppBars
     def close_banner(self):
-        self.banner.open = False
+        self.page.sb.open = True
         self.page.update()
+
 
 
     is_banner_shown = False
-    def switch_banner(self, e):
-        if self.is_banner_shown == False:
-            self.is_banner_shown = True
-            print(self.is_banner_shown)
 
+    def switch_banner(self, e):
+        self.sb.open = True
         self.page.update()
+        time.sleep(2)
+        self.sb.open = False
+        self.page.update()
+
         
         
          
@@ -412,23 +417,16 @@ class Routes():
 
 
     # Notify
-
-    def notify(self):
-        banner = ft.Banner(
-            bgcolor=ft.colors.PRIMARY,
-            leading=ft.Icon(ft.icons.WARNING_AMBER_ROUNDED, color=ft.colors.AMBER, size=40),
-            content=ft.Text(
-                "Oops, there were some errors while trying to delete the file. What would you like me to do?",
-                color = ft.colors.BLACK
-            ),
-            actions=[
-                ft.TextButton("Retry", on_click=self.close_banner)
-            ],
-            open=self.is_banner_shown
-        )
-        print('notify',self.is_banner_shown)
-        return banner
-
+    
+    def notify_user(self,e):
+        if self.notifications == True:
+            
+            self.sb.open = True
+            self.page.update()
+            self.sb.open = False
+        else:
+            print("У пользователя отключены уведомления")
+    
     # Monitoring and GOTO monitoring
 
     def monitor(self):
@@ -476,13 +474,7 @@ class Routes():
 
     # Prediction and GOTO prediction
         
-    def notify_user(self,e):
-        if self.notifications == True:
-            
-            self.sb.open = True
-            self.page.update()
-        else:
-            print("У пользователя отключены уведомления")
+   
         
     def predict_control(self):
         control = ft.Column(controls=[
@@ -805,8 +797,9 @@ class Routes():
                 "/",
                 where()
         ))
-        
-        self.page.update()
+        self.sb.open = False
+        self.page.update()       
+
     
 
 
@@ -832,5 +825,6 @@ class Routes():
                 func(),
                 self.sb
         ))
-        
+        self.sb.open = False
+
         self.page.update()
