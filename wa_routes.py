@@ -40,10 +40,16 @@ class Routes():
         self.file_picker_button.on_click = lambda _: self.file_picker.pick_files(allow_multiple=True, allowed_extensions=["csv", "xlsx"])
 
     
-        self.sb = ft.SnackBar(
-            content=ft.Text("Hello, world!"),
-            action=ft.IconButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED, on_click = self.close_banner),
-            duration=1
+        self.sb = ft.SnackBar(bgcolor = ft.colors.SECONDARY_CONTAINER,
+            content=ft.Container(content = ft.Row(controls = 
+            [ft.Icon(name=ft.icons.NOTIFICATIONS_ACTIVE, color=ft.colors.PRIMARY),
+            ft.Text("New notification for you!", size = 20, color = ft.colors.PRIMARY)])
+            ),
+            #action=ft.IconButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED, on_click = self.close_banner),
+            duration=2500,
+            show_close_icon = True,
+            close_icon_color = ft.colors.PRIMARY
+
         )
         self.page:ft.Page
         
@@ -241,21 +247,23 @@ class Routes():
 
         return d
 
-
     # Date picker
-    
+    current_date = datetime.date.today()
     def date_change(self):
         def change_date(e):
             print(f"Date picker changed, value is {date_picker.value}")
-
+            self.current_date = date_picker.value
+            self.page.update()
         def date_picker_dismissed(e):
             print(f"Date picker dismissed, value is {date_picker.value}")
-
+            self.current_date = date_picker.value
+            self.page.update()
         date_picker = ft.DatePicker(
             on_change=change_date,
             on_dismiss=date_picker_dismissed,
-            first_date=datetime.datetime(2023, 10, 1),
-            last_date=datetime.datetime(2024, 10, 1),
+            first_date=datetime.datetime(1990, 10, 1),
+            last_date=datetime.datetime(2025, 10, 1),
+            value = self.current_date
         )
 
         self.page.overlay.append(date_picker)
@@ -267,13 +275,14 @@ class Routes():
             style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0), bgcolor=colors.SURFACE_VARIANT),
             on_click=lambda _: date_picker.pick_date(),
         )
-
+        self.page.update()
         return date_button
-    
+
     
     # AppBars
     def close_banner(self):
-        self.page.sb.open = True
+        self.notifications = False
+        self.sb.open = False
         self.page.update()
 
 
@@ -281,11 +290,13 @@ class Routes():
     is_banner_shown = False
 
     def switch_banner(self, e):
-        self.sb.open = True
-        self.page.update()
-        time.sleep(2)
-        self.sb.open = False
-        self.page.update()
+        if self.notifications == True:
+            self.sb.open = True
+            self.notifications = True
+            self.page.update()
+            time.sleep(5)
+            self.sb.open = False
+            self.page.update()
 
         
         
@@ -298,12 +309,13 @@ class Routes():
             login_button.text = "Выйти"
             login_button.icon = ft.icons.LOGOUT
             login_button.on_click = self.logout
-
+        self.page.update()
         return AppBar(title=Text(name), bgcolor=colors.SURFACE_VARIANT,
             actions = [ft.Row(
                     alignment = ft.MainAxisAlignment.CENTER,
                     spacing = 2,
-                    controls = [ft.Container(width = 250, bgcolor = colors.SURFACE_VARIANT, 
+                    controls = [#ft.Card(content = ft.Text(self.current_date)),
+                        ft.Container(width = 250, bgcolor = colors.SURFACE_VARIANT, 
                                 content=self.date_change()),
                     
                     self.search(),
@@ -318,7 +330,6 @@ class Routes():
                 ),
             ]
         )
-    
         
     def colorSchemes(self)->list:
         invColor = ft.colors.PRIMARY
@@ -437,7 +448,7 @@ class Routes():
             
             self.sb.open = True
             self.page.update()
-            self.sb.open = False
+            #self.sb.open = False
         else:
             print("У пользователя отключены уведомления")
     
@@ -447,7 +458,8 @@ class Routes():
         controls = [
                 self.topAppBar("Мониторинг"),
                 self.cards(),
-                self.bottomAppBar()
+                self.bottomAppBar(),
+                self.sb
             ]
         
         return controls
@@ -572,7 +584,8 @@ class Routes():
         controls = [
                 self.topAppBar("Анализ и визуализация"),
                 self.graphics(),
-                self.bottomAppBar()
+                self.bottomAppBar(),
+                self.sb
             ]
     
         return controls
@@ -601,7 +614,8 @@ class Routes():
         controls = [
                 self.topAppBar("Прогнозирование"),
                 self.predict_control(),
-                self.bottomAppBar()
+                self.bottomAppBar(),
+                self.sb
             ]
         return controls
 
@@ -932,7 +946,8 @@ class Routes():
 
                 form,
 
-                self.bottomAppBar()
+                self.bottomAppBar(),
+                self.sb
             ]
         return controls
 
