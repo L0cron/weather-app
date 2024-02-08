@@ -166,7 +166,7 @@ class Routes():
                                                       
         
         
-
+        print(self.city)
         return dd
     
 
@@ -174,6 +174,7 @@ class Routes():
     tempfeelsTxt = ft.Text('', size = 20)
     pressureTxt = ft.Text('', size = 20)
     windTxt = ft.Text('', size = 20)
+    wetTxt = ft.Text('', size = 20)
 
     def do_refresh(self, e):
         print("Refreshing...")
@@ -216,25 +217,35 @@ class Routes():
         
         self.pressureTxt.value = 'Давление равно ' + self.pressure + " мм рт. ст."
         
-        pressureCard = ft.Card(content=ft.Column(controls=[
+        pressureCard = ft.Card(content=ft.Row(controls=[
             ft.Icon(ft.icons.COMPRESS,color=ft.colors.PRIMARY, size=50),
             ft.Text(self.pressureTxt.value, text_align=ft.TextAlign.CENTER,  size = 20)
         ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         alignment=ft.MainAxisAlignment.CENTER
         ),width=400, height=130)
+        
+        
+        self.wetTxt.value = 'Влажность равна' + ' МНОГООО'
+        
+        wetCard = ft.Card(content=ft.Row(controls=[
+            ft.Icon(ft.icons.WATER_DROP_ROUNDED,color=ft.colors.PRIMARY, size=50),
+            ft.Text(self.wetTxt.value, text_align=ft.TextAlign.CENTER,  size = 20)
+        ],
+        alignment=ft.MainAxisAlignment.CENTER
+        ),width=400, height=130)
+
 
 
 
         self.windTxt.value= 'Скорость ветра равна ' + self.pressure + " м/c"
         
-        windCard = ft.Card(content=ft.Column(controls=[
+        windCard = ft.Card(content=ft.Row(controls=[
             ft.Icon(ft.icons.WIND_POWER_OUTLINED,color=ft.colors.PRIMARY, size=50),
             ft.Text(self.windTxt.value, text_align=ft.TextAlign.CENTER, size = 20)
         ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         alignment=ft.MainAxisAlignment.CENTER
         ),width=400, height=130)
+        
         
         dateCard = ft.Card(content=ft.Row(controls=[ft.Text('  '),
             ft.Row(controls=[
@@ -247,7 +258,7 @@ class Routes():
                     icon_size=35,
                     icon_color=ft.colors.PRIMARY,
                     style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=3)),
-                    on_click=do_refresh
+                    on_click=self.do_refresh
                     
                 ),
             ],
@@ -261,7 +272,8 @@ class Routes():
                                 ft.Row(controls=
                                 [pressureCard,
                                 dateCard]),
-                                 windCard],
+                                 windCard,
+                                  wetCard],
         horizontal_alignment=ft.CrossAxisAlignment.START,
         width=3200)
         
@@ -274,17 +286,22 @@ class Routes():
     def date_change(self):
         def change_date(e):
             print(f"Date picker changed, value is {date_picker.value}")
-            self.current_date = date_picker.value
+            self.current_date = str(date_picker.value)[:10]
+            print('data changed to', self.current_date)
+            self.go_to_monitor(e)
+            self.go_to_prediction(e)
             self.page.update()
+            
         def date_picker_dismissed(e):
             print(f"Date picker dismissed, value is {date_picker.value}")
             self.current_date = date_picker.value
             self.page.update()
+            
         date_picker = ft.DatePicker(
             on_change=change_date,
             on_dismiss=date_picker_dismissed,
-            first_date=datetime.datetime(1990, 10, 1),
-            last_date=datetime.datetime(2025, 10, 1),
+            first_date=datetime.date(1990, 10, 1),
+            last_date=datetime.date(2025, 10, 1),
             value = self.current_date
         )
 
@@ -676,14 +693,24 @@ class Routes():
         ])
 
         return control
-
+    
+    def predict_cards(self):
+        control = ft.Card(content=ft.Row(controls=[
+            ft.Icon(ft.icons.CALENDAR_MONTH_OUTLINED,color=ft.colors.PRIMARY, size=50),
+            ft.Text('Выбранная дата: ' + str(self.current_date), text_align=ft.TextAlign.CENTER, size = 30)
+        ],
+        alignment=ft.MainAxisAlignment.CENTER
+        ),width=4000, height=130)
+        return control
+    
     def prediction(self):
         controls = [
                 self.topAppBar("Прогнозирование"),
-                self.predict_control(),
+                self.predict_cards(),
                 self.bottomAppBar(),
                 self.sb
             ]
+        self.page.update()
         return controls
 
 
