@@ -32,6 +32,10 @@ class Routes():
     page:ft.Page = None
     d_or_l:str = 'dark'
 
+    graph_1:PlotlyChart=None
+    graph_2:PlotlyChart=None
+    graph_3:PlotlyChart=None
+
     def __init__(self, page) -> None:
         self.page = page
         self.file_picker = ft.FilePicker(on_result=self.on_dialog_result)
@@ -43,15 +47,16 @@ class Routes():
         self.sb = ft.SnackBar(bgcolor = ft.colors.SECONDARY_CONTAINER,
             content=ft.Container(content = ft.Row(controls = 
             [ft.Icon(name=ft.icons.NOTIFICATIONS_ACTIVE, color=ft.colors.PRIMARY),
-            ft.Text("New notification for you!", size = 20, color = ft.colors.PRIMARY)])
+            ft.Text("Добрый вечер! В Москве сейчас -2"+self.deg_cel, size = 20, color = ft.colors.PRIMARY)])
             ),
             #action=ft.IconButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED, on_click = self.close_banner),
-            duration=2500,
+            duration=10000,
             show_close_icon = True,
             close_icon_color = ft.colors.PRIMARY
 
         )
         self.page:ft.Page
+
         
     # Search button  
 
@@ -170,6 +175,10 @@ class Routes():
     pressureTxt = ft.Text('', size = 20)
     windTxt = ft.Text('', size = 20)
 
+    def do_refresh(self, e):
+        print("Refreshing...")
+        return
+
     def cards(self):
 
         self.tempTxt.value = 'Температура на данный момент равняется ' + self.temp + self.deg_cel
@@ -228,8 +237,21 @@ class Routes():
         ),width=400, height=130)
         
         dateCard = ft.Card(content=ft.Row(controls=[ft.Text('  '),
-            ft.Icon(ft.icons.ACCESS_TIME,color=ft.colors.PRIMARY, size=50),
-            ft.Text('Актуально на ...', text_align=ft.TextAlign.LEFT, size = 30)
+            ft.Row(controls=[
+                ft.Row(controls=[
+                    ft.Icon(ft.icons.ACCESS_TIME,color=ft.colors.PRIMARY, size=50),
+                    ft.Text('Актуально на ...', text_align=ft.TextAlign.LEFT, size = 30),
+                ],alignment=ft.MainAxisAlignment.START),
+                ft.IconButton(
+                    icon='refresh',
+                    icon_size=35,
+                    icon_color=ft.colors.PRIMARY,
+                    style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=3)),
+                    on_click=do_refresh
+                    
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         ],
         alignment = ft.MainAxisAlignment.START
         ),width=600, height=130)
@@ -484,23 +506,28 @@ class Routes():
                 a = i[1].replace('.', '-')
                 woof_days.append(a + ' ' + i[0])
             return woof_days
+        
+        # Reading CSV files into Pandas DataFrames
         anime = pd.read_csv('./serverside/sanya/1.csv', low_memory=False, index_col=0, sep=',')
         anime2 = pd.read_csv('./serverside/sanya/2.csv', low_memory=False, index_col=0, sep=',')
         anime3 = pd.read_csv('./serverside/sanya/3.csv', low_memory=False, index_col=0, sep=',')
         
+        # Processing data from anime
         days = filter_(anime['время'].values)
         temperatures = anime['температура_воздуха_по_сухому_термометру'].values[:90:]
         humidities = anime['относительная_влажность_воздуха'].values[:90:]
         pressures = anime['атмосферное_давление_на_уровне_станции'].values[:90:]
         datetime_objects = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
         
-        days2= filter_(anime2['время'].values)
+        # Processing data from anime2
+        days2 = filter_(anime2['время'].values)
         temperatures2 = anime2['температура_воздуха_по_сухому_термометру'].values[:90:]
         humidities2 = anime2['относительная_влажность_воздуха'].values[:90:]
         pressures2 = anime2['атмосферное_давление_на_уровне_станции'].values[:90:]
         datetime_objects2 = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
         
-        days3= filter_(anime3['время'].values)
+        # Processing data from anime3
+        days3 = filter_(anime3['время'].values)
         temperatures3 = anime3['температура_воздуха_по_сухому_термометру'].values[:90:]
         humidities3 = anime3['относительная_влажность_воздуха'].values[:90:]
         pressures3 = anime3['атмосферное_давление_на_уровне_станции'].values[:90:]
@@ -510,7 +537,7 @@ class Routes():
         fig = go.Figure()
 
         # Добавляем график для температуры на ось Y1
-        fig.add_trace(go.Scatter(x=datetime_objects, y=temperatures, mode='lines', name='Температура', yaxis='y1'))
+        fig.add_trace(go.Scatter(x=datetime_objects, y=temperatures, mode='lines', name='Температура'))
 
         # Добавляем график для влажности на ось Y2
         fig.add_trace(go.Scatter(x=datetime_objects, y=humidities, mode='lines', name='Влажность', yaxis='y2'))
@@ -520,14 +547,17 @@ class Routes():
 
         # Настройка меток осей и заголовка
         fig.update_layout(title=None,
-                      yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
-                      yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
-                      yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
-                      xaxis=dict(title=None),
-                      height=300,  # Установка высоты графика
-                      width=400)
+                        yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                        xaxis=dict(title=None, showticklabels=False),
+                        height=300,  # Установка высоты графика
+                        width=400,
+                        showlegend=False,
+                        margin=dict(l=0,r=0,b=0,t=0),
+                        paper_bgcolor="Black")
         
-                # Построение графика с использованием Plotly
+        # Построение графика с использованием Plotly
         fig2 = go.Figure()
 
         # Добавляем график для температуры на ось Y1
@@ -541,12 +571,17 @@ class Routes():
 
         # Настройка меток осей и заголовка
         fig2.update_layout(title=None,
-                      yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
-                      yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
-                      yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
-                      xaxis=dict(title=None),
-                      height=300,  # Установка высоты графика
-                      width=400)
+                        yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                        xaxis=dict(title=None, showticklabels=False),
+                        height=300,  # Установка высоты графика
+                        width=400,
+                        showlegend=False,
+                        margin=dict(l=0,r=0,b=0,t=0),
+                        paper_bgcolor="Black")
+        
+        # Построение графика с использованием Plotly
         fig3 = go.Figure()
 
         # Добавляем график для температуры на ось Y1
@@ -560,30 +595,57 @@ class Routes():
 
         # Настройка меток осей и заголовка
         fig3.update_layout(title=None,
-                      yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
-                      yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
-                      yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
-                      xaxis=dict(title=None),
-                      height=300,  # Установка высоты графика
-                      width=400)
-        self.page.add(PlotlyChart(fig, expand=False, isolated=False,))
-        self.page.add(PlotlyChart(fig2, expand=False, isolated=False,))
-        self.page.add(PlotlyChart(fig3, expand=False, isolated=False,))
+                        yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                        xaxis=dict(title=None, showticklabels=False),
+                        height=300,  # Установка высоты графика
+                        width=400,
+                        showlegend=False,
+                        margin=dict(l=0,r=0,b=0,t=0),
+                        paper_bgcolor="Black")
+        
+        self.graph_1 = PlotlyChart(fig, expand=True, isolated=False,)
+        self.graph_2 = PlotlyChart(fig2, expand=True, isolated=False,)
+        self.graph_3 = PlotlyChart(fig3, expand=True, isolated=False,)
+        self.load_graphics = 2
+
         self.page.update()
         
-        return ft.Row(controls=[PlotlyChart(fig, expand=True, isolated=False,), PlotlyChart(fig3, expand=True, isolated=False,), PlotlyChart(fig2, expand=True, isolated=False,)],
-                     )
-        
 
-
+    def show_graphics(self):
+        return ft.Row(controls=[self.graph_1,
+                                self.graph_2,
+                                self.graph_3
+                                ])
     
     
-    
+    load_graphics = 0
+    # 0 Не загружены
+    # 1 Загружаются
+    # 2 Загружены
     def analyze(self):
-  
+
+        dlg_modal = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Идёт загрузка..."),
+            content=ft.Text("Пожалуйста подождите, это займет не более минуты."),
+            actions_alignment=ft.MainAxisAlignment.END,
+            open=True
+        )
+
+
+        graphs = dlg_modal
+        if self.graph_1 != None and self.graph_2 != None and self.graph_3 != None:
+            graphs = self.show_graphics()
+        else:
+            if self.load_graphics == 0:
+                self.load_graphics = 1
+
+
         controls = [
                 self.topAppBar("Анализ и визуализация"),
-                self.graphics(),
+                graphs,
                 self.bottomAppBar(),
                 self.sb
             ]
@@ -598,6 +660,11 @@ class Routes():
             
         self.page.update()
 
+        if self.load_graphics == 1:
+            print("Loading graphics")
+            self.graphics()
+            self.active_button = 1
+            self.goto(self.analyze)
 
     # Prediction and GOTO prediction
         
