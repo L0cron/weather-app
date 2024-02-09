@@ -106,6 +106,22 @@ class Routes():
         self.monitor()
         self.page.update()
 
+
+
+
+    pb_lst = ['Уведомление 1','Уведомление 2','Уведомление 3']
+    pb = ft.PopupMenuButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED,
+        items=[
+            ft.PopupMenuItem(
+                text="Закрыть",
+                icon = ft.icons.EXIT_TO_APP_OUTLINED,
+            ),
+            #ft.PopupMenuItem(),
+        ]
+    )
+    for i in pb_lst: pb.items.insert(2, (ft.PopupMenuItem(text=i)))
+
+
     def search(self):
  
         #t = ft.Text(self.text)
@@ -176,9 +192,20 @@ class Routes():
     windTxt = ft.Text('', size = 20)
     wetTxt = ft.Text('', size = 20)
 
-    def do_refresh(self, e):
-        print("Refreshing...")
-        return
+    # def date_change(self):
+    #     def change_date(e):
+    #         print('hui')
+
+    #         if self.active_button == 0:
+    #             self.go_to_monitor(e)
+    #         elif self.active_button == 1:
+    #             self.go_to_analyze(e)
+    #         elif self.active_button == 2:
+    #             self.go_to_prediction(e)
+    #         elif self.active_button == 3:
+    #             self.go_to_upload(e)
+    #         #self.go_to_prediction(e)
+    #         self.page.update()
 
     def cards(self):
 
@@ -251,7 +278,7 @@ class Routes():
             ft.Row(controls=[
                 ft.Row(controls=[
                     ft.Icon(ft.icons.ACCESS_TIME,color=ft.colors.PRIMARY, size=50),
-                    ft.Text('Актуально на ...', text_align=ft.TextAlign.LEFT, size = 30),
+                    ft.Text(str('Актуально на '+str(self.current_date)), text_align=ft.TextAlign.LEFT, size = 30),
                 ],alignment=ft.MainAxisAlignment.START),
               
             ],
@@ -273,6 +300,23 @@ class Routes():
 
 
         return d
+    
+
+
+    def do_refresh(self, e):
+            print("Refreshing...")
+            print('data changed to', self.current_date)
+            if self.active_button == 0:
+                self.goto(self.monitor)
+            elif self.active_button == 1:
+                self.goto(self.analyze)
+            elif self.active_button == 2:
+                self.goto(self.prediction)
+            elif self.active_button == 3:
+                self.goto(self.upload)
+            #self.go_to_prediction(e)
+            self.page.update()
+
 
     # Date picker
     current_date = datetime.date.today()
@@ -281,8 +325,15 @@ class Routes():
             print(f"Date picker changed, value is {date_picker.value}")
             self.current_date = str(date_picker.value)[:10]
             print('data changed to', self.current_date)
-            self.go_to_monitor(e)
-            self.go_to_prediction(e)
+            if self.active_button == 0:
+                self.goto(self.monitor)
+            elif self.active_button == 1:
+                self.goto(self.analyze)
+            elif self.active_button == 2:
+                self.goto(self.prediction)
+            elif self.active_button == 3:
+                self.goto(self.upload)
+            #self.go_to_prediction(e)
             self.page.update()
             
         def date_picker_dismissed(e):
@@ -351,7 +402,8 @@ class Routes():
                                 content=self.date_change()),
                     
                     self.search(),
-                    ft.IconButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED, on_click = self.switch_banner),
+                    #ft.IconButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED, on_click = self.switch_banner),
+                    self.pb,
                     ft.PopupMenuButton(
                     items=[
                         ElevatedButton(icon = ft.icons.SETTINGS, text = 'Настройки', color = ft.colors.BLACK, on_click=self.go_to_settings),
@@ -660,10 +712,14 @@ class Routes():
         dlg_modal = ft.AlertDialog(
             modal=True,
             title=ft.Text("Идёт загрузка..."),
-            content=ft.Text("Пожалуйста подождите, это займет не более минуты."),
+            content=ft.Row(controls = [ft.Text("Пожалуйста подождите, это займет не более минуты."),
+            #ft.ProgressBar(width=200, height = 10,color="amber", bgcolor="#eeeeee")
+            ft.ProgressRing(width=25, height=25, stroke_width = 2)
+            ]),
             actions_alignment=ft.MainAxisAlignment.END,
-            open=True
+            open=True,
         )
+        
 
 
         graphs = dlg_modal
