@@ -292,13 +292,15 @@ class Routes():
         alignment = ft.MainAxisAlignment.START
         ),width=600, height=130)
 
-
-        d = ft.Column(controls=[temps,
-                                ft.Row(controls=
-                                [pressureCard,
-                                dateCard]),
+        #cont = ft.Container(content = dateCard,alignment = ft.alignment.Alignment, width = 4000, height = 200, bgcolor = ft.colors.RED)
+        #cont.alignment = ft.alignment.bottom_right
+        dat = floating_action_button = ft.FloatingActionButton(icon=ft.icons.ADD, text = 'loool', bgcolor=ft.colors.LIME_300)
+        d = ft.Column(controls=[temps,                       
+                                pressureCard,
                                  windCard,
-                                  wetCard],
+                                  wetCard,
+                                  #dat,
+                                  ],
         horizontal_alignment=ft.CrossAxisAlignment.START,
         width=3200)
         
@@ -360,6 +362,7 @@ class Routes():
             "Изменить дату",
             icon=ft.icons.CALENDAR_MONTH,
             height = 75,
+            width = 300,
             style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0), bgcolor=colors.SURFACE_VARIANT),
             on_click=lambda _: date_picker.pick_date(),
         )
@@ -398,12 +401,26 @@ class Routes():
             login_button.icon = ft.icons.LOGOUT
             login_button.on_click = self.logout
         self.page.update()
+        
+        dateCard = ft.Card(content=ft.Row(controls=[ft.Text('  '),
+            ft.Row(controls=[
+                ft.Row(controls=[
+                    ft.Icon(ft.icons.ACCESS_TIME,color=ft.colors.PRIMARY, size=20),
+                    ft.Text(str('Актуально на '+str(self.current_date)[8:] +'.' +str(self.current_date)[5:7]+'.'+ str(self.current_date)[:4]), text_align=ft.TextAlign.LEFT, size = 20),
+                ],alignment=ft.MainAxisAlignment.START),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        ],
+        alignment = ft.MainAxisAlignment.START
+        ),width=300, height = 300, color = ft.colors.SURFACE_VARIANT)
+        
+        
         return AppBar(title=Text(name), bgcolor=colors.SURFACE_VARIANT,
             actions = [ft.Row(
                     alignment = ft.MainAxisAlignment.CENTER,
-                    spacing = 2,
-                    controls = [#ft.Card(content = ft.Text(self.current_date)),
-                        ft.Container(width = 250, bgcolor = colors.SURFACE_VARIANT, 
+                    spacing = 4,
+                    controls = [dateCard,
+                                 ft.Container(width = 250, bgcolor = colors.SURFACE_VARIANT, 
                                 content=self.date_change()),
                     
                     self.search(),
@@ -545,10 +562,9 @@ class Routes():
 
     def make_refresh(self):
         a = ft.FloatingActionButton(
-                    icon=ft.icons.REFRESH_ROUNDED, on_click=self.do_refresh, bgcolor=ft.colors.BLUE   
-                )
+                    icon=ft.icons.REFRESH_ROUNDED, on_click=self.do_refresh, bgcolor=ft.colors.BLUE )
         return a
-    
+    dat = floating_action_button = ft.FloatingActionButton(icon=ft.icons.ADD, text = 'loool', bgcolor=ft.colors.LIME_300)
     def monitor(self):
         controls = [
                 self.topAppBar("Мониторинг"),
@@ -621,7 +637,7 @@ class Routes():
 
         # Настройка меток осей и заголовка
         fig.update_layout(title=None,
-                        yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis=dict(title=None, side='left', showgrid=True, zeroline=True, showticklabels=True),
                         yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
                         yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
                         xaxis=dict(title=None, showticklabels=False),
@@ -629,7 +645,7 @@ class Routes():
                         width=400,
                         showlegend=False,
                         margin=dict(l=0,r=0,b=0,t=0),
-                        paper_bgcolor="Black")
+                        paper_bgcolor="#F0F8FF")
         
         # Построение графика с использованием Plotly
         fig2 = go.Figure()
@@ -645,7 +661,7 @@ class Routes():
 
         # Настройка меток осей и заголовка
         fig2.update_layout(title=None,
-                        yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis=dict(title=None, side='left', showgrid=True, zeroline=True, showticklabels=True),
                         yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
                         yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
                         xaxis=dict(title=None, showticklabels=False),
@@ -653,7 +669,7 @@ class Routes():
                         width=400,
                         showlegend=False,
                         margin=dict(l=0,r=0,b=0,t=0),
-                        paper_bgcolor="Black")
+                        paper_bgcolor="#F0F8FF")
         
         # Построение графика с использованием Plotly
         fig3 = go.Figure()
@@ -669,15 +685,15 @@ class Routes():
 
         # Настройка меток осей и заголовка
         fig3.update_layout(title=None,
-                        yaxis=dict(title=None, side='left', showgrid=False, zeroline=False, showticklabels=False),
-                        yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
-                        yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis=dict(title=None, side='left', showgrid=True, zeroline=True, showticklabels=True),
+                        yaxis2=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=True, showticklabels=False),
+                        yaxis3=dict(title=None, side='right', overlaying='y', showgrid=False, zeroline=True, showticklabels=False),
                         xaxis=dict(title=None, showticklabels=False),
                         height=300,  # Установка высоты графика
                         width=400,
                         showlegend=False,
                         margin=dict(l=0,r=0,b=0,t=0),
-                        paper_bgcolor="Black")
+                        paper_bgcolor="#F0F8FF")
         
         self.graph_1 = PlotlyChart(fig, expand=True, isolated=False,)
         self.graph_2 = PlotlyChart(fig2, expand=True, isolated=False,)
@@ -687,7 +703,7 @@ class Routes():
         self.page.update()
         
     
-    def grafics_card(self):
+    def grafics_card2(self):
         a = ft.Card(content = ft.Row(
             controls = [ft.Column( controls = [
             ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.BLUE, size=30), ft.Text('Температура', size = 30)]),   
@@ -700,11 +716,18 @@ class Routes():
         )
         return a
     
+    def grafics_card1(self):
+        a = ft.Card(content = ft.Text('Зависимости от времени', text_align = ft.TextAlign.CENTER, size = 30), width = 4000, height = 55)
+        return a
+
+    
     def show_graphics(self):
-        return ft.Column( controls = [ft.Row(controls=[self.graph_1,
+        return ft.Column( controls = [
+            self.grafics_card1(),
+            ft.Row(controls=[self.graph_1,
                                 self.graph_2,
                                 self.graph_3]),
-                                self.grafics_card()
+                                self.grafics_card2()
         ])
     
     
@@ -792,7 +815,7 @@ class Routes():
                 self.sb,
                 self.make_refresh(),
                 ft.Row(controls = [
-                ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor, icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на завтра",expand=True,height=hgt,  style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)),),
+                ft.ElevatedButton(color=normalTxtColor,bgcolor=normalColor, icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на завтра",expand=True,height=hgt, style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)),),
                 ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor,icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на неделю", style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)),expand=True,height=hgt),
                 ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor, icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на месяц", style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)), expand=True,height=hgt)])
                 ]
