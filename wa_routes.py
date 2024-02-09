@@ -190,8 +190,9 @@ class Routes():
     tempfeelsTxt = ft.Text('', size = 20)
     pressureTxt = ft.Text('', size = 20)
     windTxt = ft.Text('', size = 20)
+    windTxtnap = ft.Text('', size = 20)
     wetTxt = ft.Text('', size = 20)
-
+    osTxt = ft.Text('', size = 20)
     # def date_change(self):
     #     def change_date(e):
     #         print('hui')
@@ -246,39 +247,43 @@ class Routes():
         
         pressureCard = ft.Card(content=ft.Row(controls=[
             ft.Icon(ft.icons.COMPRESS,color=ft.colors.PRIMARY, size=50),
-            ft.Text(self.pressureTxt.value, text_align=ft.TextAlign.CENTER,  size = 20)
+            ft.Text(self.pressureTxt.value, text_align=ft.TextAlign.CENTER,  size = 25)
         ],
         alignment=ft.MainAxisAlignment.CENTER
-        ),width=400, height=130)
+        ),width=500, height=130)
         
         
         self.wetTxt.value = 'Влажность равна' + ' МНОГООО'
-        
+        self.osTxt.value = 'Количество осадков равно' + ' МНОГООО'
         wetCard = ft.Card(content=ft.Row(controls=[
             ft.Icon(ft.icons.WATER_DROP_ROUNDED,color=ft.colors.PRIMARY, size=50),
-            ft.Text(self.wetTxt.value, text_align=ft.TextAlign.CENTER,  size = 20)
+             ft.Column(controls = [
+            ft.Text(self.wetTxt.value, text_align=ft.TextAlign.CENTER,  size = 25),
+            ft.Text(self.osTxt.value, text_align=ft.TextAlign.CENTER,  size = 19)],
+            alignment = ft.MainAxisAlignment.CENTER)
         ],
         alignment=ft.MainAxisAlignment.CENTER
-        ),width=400, height=130)
+        ),width=500, height=130)
 
 
 
 
         self.windTxt.value= 'Скорость ветра равна ' + self.pressure + " м/c"
-        
+        self.windTxtnap.value= 'Направление ветра  ' + self.pressure
         windCard = ft.Card(content=ft.Row(controls=[
             ft.Icon(ft.icons.WIND_POWER_OUTLINED,color=ft.colors.PRIMARY, size=50),
-            ft.Text(self.windTxt.value, text_align=ft.TextAlign.CENTER, size = 20)
+            ft.Column(controls = [ft.Text(self.windTxt.value, text_align=ft.TextAlign.CENTER, size = 25),
+            ft.Text(self.windTxtnap.value, text_align=ft.TextAlign.CENTER, size = 19)], alignment = ft.MainAxisAlignment.CENTER)
         ],
         alignment=ft.MainAxisAlignment.CENTER
-        ),width=400, height=130)
+        ),width=500, height=130)
         
         
         dateCard = ft.Card(content=ft.Row(controls=[ft.Text('  '),
             ft.Row(controls=[
                 ft.Row(controls=[
                     ft.Icon(ft.icons.ACCESS_TIME,color=ft.colors.PRIMARY, size=50),
-                    ft.Text(str('Актуально на '+str(self.current_date)), text_align=ft.TextAlign.LEFT, size = 30),
+                    ft.Text(str('Актуально на '+str(self.current_date)[8:] +'.' +str(self.current_date)[5:7]+'.'+ str(self.current_date)[:4]), text_align=ft.TextAlign.LEFT, size = 25),
                 ],alignment=ft.MainAxisAlignment.START),
               
             ],
@@ -768,7 +773,7 @@ class Routes():
     def predict_cards(self):
         control = ft.Card(content=ft.Row(controls=[
             ft.Icon(ft.icons.CALENDAR_MONTH_OUTLINED,color=ft.colors.PRIMARY, size=50),
-            ft.Text('Выбранная дата: ' + str(self.current_date), text_align=ft.TextAlign.CENTER, size = 30)
+            ft.Text('Выбранная дата: ' + str(self.current_date)[8:] +'.' +str(self.current_date)[5:7]+'.'+ str(self.current_date)[:4], text_align=ft.TextAlign.CENTER, size = 30)
         ],
         alignment=ft.MainAxisAlignment.CENTER
         ),width=4000, height=130)
