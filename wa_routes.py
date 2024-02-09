@@ -253,14 +253,7 @@ class Routes():
                     ft.Icon(ft.icons.ACCESS_TIME,color=ft.colors.PRIMARY, size=50),
                     ft.Text('Актуально на ...', text_align=ft.TextAlign.LEFT, size = 30),
                 ],alignment=ft.MainAxisAlignment.START),
-                ft.IconButton(
-                    icon='refresh',
-                    icon_size=35,
-                    icon_color=ft.colors.PRIMARY,
-                    style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=3)),
-                    on_click=self.do_refresh
-                    
-                ),
+              
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         ],
@@ -493,12 +486,19 @@ class Routes():
     
     # Monitoring and GOTO monitoring
 
+    def make_refresh(self):
+        a = ft.FloatingActionButton(
+                    icon=ft.icons.REFRESH_ROUNDED, on_click=self.do_refresh, bgcolor=ft.colors.BLUE   
+                )
+        return a
+    
     def monitor(self):
         controls = [
                 self.topAppBar("Мониторинг"),
                 self.cards(),
                 self.bottomAppBar(),
-                self.sb
+                self.sb,
+                self.make_refresh()
             ]
         
         return controls
@@ -629,12 +629,26 @@ class Routes():
 
         self.page.update()
         
-
+    
+    def grafics_card(self):
+        a = ft.Card(content = ft.Row(
+            controls = [ft.Column( controls = [
+            ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.BLUE, size=30), ft.Text('Температура', size = 30)]),   
+            ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.RED, size=30), ft.Text('Влажность', size = 30)]),  
+            ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.GREEN, size=30), ft.Text('Давление', size = 30)]),
+            ])
+            ]   
+        ),
+        width = 300
+        )
+        return a
+    
     def show_graphics(self):
-        return ft.Row(controls=[self.graph_1,
+        return ft.Column( controls = [ft.Row(controls=[self.graph_1,
                                 self.graph_2,
-                                self.graph_3
-                                ])
+                                self.graph_3]),
+                                self.grafics_card()
+        ])
     
     
     load_graphics = 0
@@ -664,7 +678,8 @@ class Routes():
                 self.topAppBar("Анализ и визуализация"),
                 graphs,
                 self.bottomAppBar(),
-                self.sb
+                self.sb,
+                self.make_refresh()
             ]
     
         return controls
@@ -704,12 +719,22 @@ class Routes():
         return control
     
     def prediction(self):
+        normalColor = ft.colors.SURFACE_VARIANT
+        normalTxtColor = ft.colors.PRIMARY
+        regularButtonStyle = ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0))
+        hgt = self.bottomABhgt
+
         controls = [
                 self.topAppBar("Прогнозирование"),
                 self.predict_cards(),
                 self.bottomAppBar(),
-                self.sb
-            ]
+                self.sb,
+                self.make_refresh(),
+                ft.Row(controls = [
+                ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor, icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на завтра",expand=True,height=hgt,  style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)),),
+                ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor,icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на неделю", style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)),expand=True,height=hgt),
+                ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor, icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на месяц", style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)), expand=True,height=hgt)])
+                ]
         self.page.update()
         return controls
 
@@ -1041,7 +1066,8 @@ class Routes():
                 form,
 
                 self.bottomAppBar(),
-                self.sb
+                self.sb,
+                self.make_refresh()
             ]
         return controls
 
