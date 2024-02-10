@@ -8,9 +8,11 @@ def main(page: ft.Page):
     page.title = "Weather"
     page.theme_mode = ft.ThemeMode.DARK
 
-    page.window_min_width = 1000
-    page.window_min_height = 600
+    page.window_min_width = 1250
+    page.window_min_height = 760
     
+    page.window_width = page.window_min_width
+    page.window_height = page.window_min_height
 
     routes = wa_routes.Routes
             

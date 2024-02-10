@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 from flet.plotly_chart import PlotlyChart
-
+import asyncio
 
 
 class Routes():
@@ -57,19 +57,35 @@ class Routes():
         )
         self.page:ft.Page
 
+        try:
         
+            self.search_init()
+
+            self.do_refresh()
+            self.init_complete = True
+        except:
+            print("Сервер не ответил")
+
+        
+        
+
+    
     # Search button  
 
     city = 'Москва'
 
 
     temp = '0' # градусы цельсия
-    feels_like = '0' # градусы цельсия
+    feels_like = None # градусы цельсия
     pressure = '0' # мм рт. ст.
+    humidity = '0' # влажность
     speed = '0' # м/c
-    weather = ""
+    description = "" # описание
+    wind_direction = '0' # градусы
+    overcast = None # overcast
     
     deg_cel = '℃'
+    deg = '°'
 
     print1 = ft.Text('', size = 30, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
     print2 = ft.Text('', size = 20,bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
@@ -89,20 +105,12 @@ class Routes():
         #url = 'https://api.openweathermap.org/data/2.5/weather?q='+city+'&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
         
 
-        weather_data = requests.get(self.webserver_url+"?city="+self.city).json()
-
-        # self.print1.value = '🌡️ Температура воздуха: '+ str(round(weather_data['main']['temp'])) + ' ℃'
-        # self.print2.value  = '      Ощущается как: ' + str(round(weather_data['main']['feels_like'])) + ' ℃'
-        # self.print3.value  = '📈 Давление: ' + str(round(weather_data['main']['pressure'])*0.75) + ' мм.рт.ст'
-        # self.print4.value  = '💨 Скорость ветра: ' + str(round(weather_data['wind']['speed'])) + ' м/с'
-        # self.print5.value  = str(weather_data['weather'][0]['description'])
-
-        self.temp = str(round(weather_data['main']['temp']))
-        self.feels_like = str(round(weather_data['main']['feels_like']))
-        self.pressure = str(round(weather_data['main']['pressure'])*0.75)
-        self.speed = str(round(weather_data['wind']['speed']))
-        self.weather = str(weather_data['weather'][0]['description'])
+        weather_data = requests.get(self.webserver_url+'/city',params={'city':city,'date':self.date_to_bd_date(self.current_date)})
+        if str(weather_data.content)[2:-1] == 'Error':
+            return
         
+        self.do_refresh()
+
         self.monitor()
         self.page.update()
 
@@ -121,56 +129,20 @@ class Routes():
     )
     for i in pb_lst: pb.items.insert(2, (ft.PopupMenuItem(text=i)))
 
+    search_options = []
+    def search_init(self):
+        cities = requests.get(self.webserver_url+'/cities')
+        cities = list(cities.json())
+        cities.sort()
+        self.search_options = [ft.dropdown.Option(i) for i in cities]
+        print(self.search_options)
 
     def search(self):
- 
         #t = ft.Text(self.text)
         dd = ft.Dropdown(text_size = 18,hint_style = ft.TextStyle(size = 18, color = ft.colors.PRIMARY), hint_text=self.city,
         on_change=self.dropdown_changed,
         border=0,
-        options=[
-            ft.dropdown.Option("Амстердам"),
-            ft.dropdown.Option("Архангельск"),
-            ft.dropdown.Option("Барселона"),
-            ft.dropdown.Option("Берлин"),
-            ft.dropdown.Option("Буэнос-Айрес"),
-            ft.dropdown.Option("Вашингтон"),
-            ft.dropdown.Option("Варшава"),
-            ft.dropdown.Option("Волгоград"),
-            ft.dropdown.Option("Воронеж"),
-            ft.dropdown.Option("Вена"),
-            ft.dropdown.Option("Детройт"),
-            ft.dropdown.Option("Иркутск"),
-            ft.dropdown.Option("Калининград"),
-            ft.dropdown.Option("Кёльн"),
-            ft.dropdown.Option("Копенгаген"),
-            ft.dropdown.Option("Лос-Анджелес"),
-            ft.dropdown.Option("Мадрид"),
-            ft.dropdown.Option("Мурманск"),
-            ft.dropdown.Option("Мюнхен"),
-            ft.dropdown.Option("Москва"),
-            ft.dropdown.Option("Неаполь"),
-            ft.dropdown.Option("Нижний Новгород"),
-            ft.dropdown.Option("Новосибирск"),
-            ft.dropdown.Option("Нью-Йорк"),
-            ft.dropdown.Option("Омск"),
-            ft.dropdown.Option("Оттава"),
-            ft.dropdown.Option("Париж"),
-            ft.dropdown.Option("Псков"),
-            ft.dropdown.Option("Пермь"),
-            ft.dropdown.Option("Рим"),
-            ft.dropdown.Option("Рио-де-Жанейро"),
-            ft.dropdown.Option("Ростов-на-Дону"),
-            ft.dropdown.Option("Сочи"),
-            ft.dropdown.Option("Сан-Франциско"),
-            ft.dropdown.Option("Санкт-Петербург"),
-            ft.dropdown.Option("Стамбул"),
-            ft.dropdown.Option("Томск"),
-            ft.dropdown.Option("Тегеран"),
-            ft.dropdown.Option("Торонто"),
-            ft.dropdown.Option("Углич"),
-           
-        ],
+        options=self.search_options,
         width=350,
         )
 
@@ -186,46 +158,29 @@ class Routes():
         return dd
     
 
-    tempTxt = ft.Text('', size = 30)
-    tempfeelsTxt = ft.Text('', size = 20)
-    pressureTxt = ft.Text('', size = 20)
-    windTxt = ft.Text('', size = 20)
-    windTxtnap = ft.Text('', size = 20)
-    wetTxt = ft.Text('', size = 20)
-    osTxt = ft.Text('', size = 20)
-    # def date_change(self):
-    #     def change_date(e):
-    #         print('hui')
-
-    #         if self.active_button == 0:
-    #             self.go_to_monitor(e)
-    #         elif self.active_button == 1:
-    #             self.go_to_analyze(e)
-    #         elif self.active_button == 2:
-    #             self.go_to_prediction(e)
-    #         elif self.active_button == 3:
-    #             self.go_to_upload(e)
-    #         #self.go_to_prediction(e)
-    #         self.page.update()
+    
 
     def cards(self):
 
-        self.tempTxt.value = 'Температура на данный момент равняется ' + self.temp + self.deg_cel
+        temp = 'Температура на данный момент равняется ' + self.temp + self.deg_cel
 
 
 
         tempCard = ft.Column(width = 3200, controls = [
-            ft.Text(self.tempTxt.value, text_align=ft.TextAlign.LEFT, size = 30)],
+            ft.Text(temp, text_align=ft.TextAlign.LEFT, size = 30)],
         horizontal_alignment=ft.CrossAxisAlignment.START,
         alignment=ft.MainAxisAlignment.CENTER
         )
 
 
-
-        self.tempfeelsTxt.value = 'Ощущается как ' + self.feels_like + self.deg_cel
+        var = '0'
+        if self.feels_like != None:
+            var = self.feels_like
+        feels_like = 'Ощущается как ' + var + self.deg_cel
+        
 
         tempfeelsCard = ft.Column(width = 3200, controls=[
-            ft.Text(self.tempfeelsTxt.value, text_align=ft.TextAlign.LEFT, size = 20)
+            ft.Text(feels_like, text_align=ft.TextAlign.LEFT, size = 20)
         ],
         horizontal_alignment=ft.CrossAxisAlignment.START,
         alignment=ft.MainAxisAlignment.CENTER
@@ -243,63 +198,55 @@ class Routes():
         ))
 
         
-        self.pressureTxt.value = 'Давление равно ' + self.pressure + " мм рт. ст."
+        pressure = 'Давление равно ' + self.pressure + " мм рт. ст."
         
         pressureCard = ft.Card(content=ft.Row(controls=[
             ft.Icon(ft.icons.COMPRESS,color=ft.colors.PRIMARY, size=50),
-            ft.Text(self.pressureTxt.value, text_align=ft.TextAlign.CENTER,  size = 25)
+            ft.Text(pressure, text_align=ft.TextAlign.CENTER,  size = 25)
         ],
-        alignment=ft.MainAxisAlignment.CENTER
-        ),width=500, height=130)
+        alignment=ft.MainAxisAlignment.START
+        ),width=3200, height=130)
         
         
-        self.wetTxt.value = 'Влажность равна' + ' МНОГООО'
-        self.osTxt.value = 'Количество осадков равно' + ' МНОГООО'
+        humidity = 'Влажность равна ' + self.humidity + "%"
+        
+        
+        controls = [ft.Text(humidity, text_align=ft.TextAlign.CENTER,  size = 25)]
+        if self.overcast != None:
+            overcast = 'Количество осадков равно ' + self.overcast
+            controls.append(ft.Text(overcast, text_align=ft.TextAlign.CENTER,  size = 19))
+
+
+
         wetCard = ft.Card(content=ft.Row(controls=[
             ft.Icon(ft.icons.WATER_DROP_ROUNDED,color=ft.colors.PRIMARY, size=50),
-             ft.Column(controls = [
-            ft.Text(self.wetTxt.value, text_align=ft.TextAlign.CENTER,  size = 25),
-            ft.Text(self.osTxt.value, text_align=ft.TextAlign.CENTER,  size = 19)],
+            ft.Column(controls = controls,
             alignment = ft.MainAxisAlignment.CENTER)
         ],
-        alignment=ft.MainAxisAlignment.CENTER
-        ),width=500, height=130)
+        alignment=ft.MainAxisAlignment.START
+        ),width=3200, height=130)
+
+        if self.overcast != None:
+            wetCard.content
 
 
 
-
-        self.windTxt.value= 'Скорость ветра равна ' + self.pressure + " м/c"
-        self.windTxtnap.value= 'Направление ветра  ' + self.pressure
+        wind_speed= 'Скорость ветра равна ' + self.speed + " м/c"
+        wind_direction= 'Направление ветра ' + self.wind_direction + self.deg
         windCard = ft.Card(content=ft.Row(controls=[
             ft.Icon(ft.icons.WIND_POWER_OUTLINED,color=ft.colors.PRIMARY, size=50),
-            ft.Column(controls = [ft.Text(self.windTxt.value, text_align=ft.TextAlign.CENTER, size = 25),
-            ft.Text(self.windTxtnap.value, text_align=ft.TextAlign.CENTER, size = 19)], alignment = ft.MainAxisAlignment.CENTER)
+            ft.Column(controls = [ft.Text(wind_speed, text_align=ft.TextAlign.CENTER, size = 25),
+            ft.Text(wind_direction, text_align=ft.TextAlign.CENTER, size = 19)], alignment = ft.MainAxisAlignment.CENTER)
         ],
-        alignment=ft.MainAxisAlignment.CENTER
-        ),width=500, height=130)
+        alignment=ft.MainAxisAlignment.START
+        ),width=3200, height=130)
         
         
-        dateCard = ft.Card(content=ft.Row(controls=[ft.Text('  '),
-            ft.Row(controls=[
-                ft.Row(controls=[
-                    ft.Icon(ft.icons.ACCESS_TIME,color=ft.colors.PRIMARY, size=50),
-                    ft.Text(str('Актуально на '+str(self.current_date)[8:] +'.' +str(self.current_date)[5:7]+'.'+ str(self.current_date)[:4]), text_align=ft.TextAlign.LEFT, size = 25),
-                ],alignment=ft.MainAxisAlignment.START),
-              
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
-        ],
-        alignment = ft.MainAxisAlignment.START
-        ),width=600, height=130)
-
-        #cont = ft.Container(content = dateCard,alignment = ft.alignment.Alignment, width = 4000, height = 200, bgcolor = ft.colors.RED)
-        #cont.alignment = ft.alignment.bottom_right
-        dat = floating_action_button = ft.FloatingActionButton(icon=ft.icons.ADD, text = 'loool', bgcolor=ft.colors.LIME_300)
+        
         d = ft.Column(controls=[temps,                       
                                 pressureCard,
                                  windCard,
                                   wetCard,
-                                  #dat,
                                   ],
         horizontal_alignment=ft.CrossAxisAlignment.START,
         width=3200)
@@ -308,45 +255,105 @@ class Routes():
 
         return d
     
+    def date_to_bd_date(self, date:datetime.datetime): # 2024-02-10 YYYY-MM-DD -> (D)D.(M)M.YYYY
+        
+        d = str(date).split()[0].split('-')
+
+        result = []
+        for i in d:
+            k = i
+            for j in i:
+                if j != '0':
+                    break
+                else:
+                    k = k[1:]
+            result.append(k)
+
+        print('.'.join(result[::-1]))
+        return '.'.join(result[::-1])
+
+    init_complete = False
+
+    def do_refresh(self):
+        print("Refreshing...")
+        print('data changed to', self.current_date)
+
+        self.refresher_active = True
+
+        if self.active_button == 0:
+            self.goto(self.monitor)
+        elif self.active_button == 1:
+            self.goto(self.analyze)
+        elif self.active_button == 2:
+            self.goto(self.prediction)
+        elif self.active_button == 3:
+            self.goto(self.upload)
+        self.page.update()
+
+        date = self.date_to_bd_date(self.current_date)
+
+        city = self.city
+
+        if self.init_complete == False:
+            try:
+                self.search_init()
+                self.init_complete = True
+            except:
+                print("Сервер не отвечает")
+                self.refresher_active = False
+                if self.active_button == 0:
+                    self.goto(self.monitor)
+                elif self.active_button == 1:
+                    self.graphics()
+                    self.goto(self.analyze)
+                elif self.active_button == 2:
+                    self.goto(self.prediction)
+                elif self.active_button == 3:
+                    self.goto(self.upload)
+                self.page.update()
+                return
+
+        last = requests.get(url=self.webserver_url+"/city", params={"city":city,"date":date}).json()[-1]
+        print(last)
+
+        for i in range(len(last)):
+            if last[i] != None:
+                last[i] = str(last[i])
+
+        self.temp = last[4]
+        self.feels_like = last[5]
+        self.pressure = last[6]
+        self.humidity = last[7]
+        self.description = last[8]
+        self.wind_direction = last[9]
+        self.speed = last[10]
+        self.overcast = last[11]
 
 
-    def do_refresh(self, e):
-            print("Refreshing...")
-            print('data changed to', self.current_date)
+        self.refresher_active = False
+        if self.active_button == 0:
+            self.goto(self.monitor)
+        elif self.active_button == 1:
+            self.graphics()
+            self.goto(self.analyze)
+        elif self.active_button == 2:
+            self.goto(self.prediction)
+        elif self.active_button == 3:
+            self.goto(self.upload)
+        #self.go_to_prediction(e)
+        self.page.update()
 
-            self.refresher_active = True
-
-            if self.active_button == 0:
-                self.goto(self.monitor)
-            elif self.active_button == 1:
-                self.goto(self.analyze)
-            elif self.active_button == 2:
-                self.goto(self.prediction)
-            elif self.active_button == 3:
-                self.goto(self.upload)
-            #self.go_to_prediction(e)
-            self.page.update()
-
-            # TODO refresh n stuff
-            time.sleep(5)
-            self.refresher_active = False
-            if self.active_button == 0:
-                self.goto(self.monitor)
-            elif self.active_button == 1:
-                self.goto(self.analyze)
-            elif self.active_button == 2:
-                self.goto(self.prediction)
-            elif self.active_button == 3:
-                self.goto(self.upload)
-            #self.go_to_prediction(e)
-            self.page.update()
+    def refresh_button_pressed(self, e):
+        self.do_refresh()
 
     # Date picker
     current_date = datetime.date.today()
+    server_did_not_respond = False
+    # actual_time = str(datetime.datetime.now().hour) + ":" + str(datetime.datetime.now().minute)
     def date_change(self):
         def change_date(e):
             print(f"Date picker changed, value is {date_picker.value}")
-            self.current_date = str(date_picker.value)[:10]
+            self.current_date = date_picker.value
             print('data changed to', self.current_date)
             if self.active_button == 0:
                 self.goto(self.monitor)
@@ -418,11 +425,15 @@ class Routes():
             login_button.on_click = self.logout
         self.page.update()
         
+        text = str('Актуально на '+str(self.date_to_bd_date(self.current_date)))
+        if self.init_complete == False:
+            text = 'Сервер не отвечает.'
+
         dateCard = ft.Card(content=ft.Row(controls=[ft.Text('  '),
             ft.Row(controls=[
                 ft.Row(controls=[
                     ft.Icon(ft.icons.ACCESS_TIME,color=ft.colors.PRIMARY, size=20),
-                    ft.Text(str('Актуально на '+str(self.current_date)[8:] +'.' +str(self.current_date)[5:7]+'.'+ str(self.current_date)[:4]), text_align=ft.TextAlign.LEFT, size = 20),
+                    ft.Text(text, text_align=ft.TextAlign.LEFT, size = 20),
                 ],alignment=ft.MainAxisAlignment.START),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
@@ -595,7 +606,7 @@ class Routes():
 
     def make_refresh(self):
         a = ft.FloatingActionButton(
-                    icon=ft.icons.REFRESH_ROUNDED, on_click=self.do_refresh, bgcolor=ft.colors.BLUE )
+                    icon=ft.icons.REFRESH_ROUNDED, on_click=self.refresh_button_pressed, bgcolor=ft.colors.BLUE )
         return a
     dat = floating_action_button = ft.FloatingActionButton(icon=ft.icons.ADD, text = 'loool', bgcolor=ft.colors.LIME_300)
     def monitor(self):
@@ -621,16 +632,6 @@ class Routes():
         
     # Graphics
 
-    temp_fact = ''
-    wet_fact = ''
-    press_fact = ''
-    temp_fact2 = ''
-    wet_fact2 = ''
-    press_fact2 = ''
-    temp_fact3 = ''
-    wet_fact3 = ''
-    press_fact3 = ''
-    
     def graphics(self):
         def filter_(days):
             days = list(date.split(' ') for date in days)
@@ -814,33 +815,7 @@ class Routes():
     def grafics_card1(self):
         a = ft.Card(content = ft.Text('Зависимости от времени', text_align = ft.TextAlign.CENTER, size = 30), width = 4000, height = 55)
         return a
-    
-    def grafics_fact1(self):
-        a = ft.Column(controls = [
-                        ft.Text(self.temp_fact, size = 20),ft.Text(self.wet_fact, size = 20),ft.Text(self.press_fact, size = 20)
-                    ])
-                    
-        return a
-    
-    def grafics_fact2(self):
-        a =  ft.Column(controls = [
-                        ft.Text(' '+str(self.temp_fact2)+' ', size = 20),ft.Text(' '+str(self.wet_fact2)+' ', size = 20),ft.Text(' '+str(self.press_fact2)+' ', size = 20)
-                    ])
-                    
-        return a
-    
-    def grafics_fact3(self):
-        a =ft.Column(controls = [
-                    ft.Text(self.temp_fact3, size = 20),ft.Text(self.wet_fact3, size = 20),ft.Text(self.press_fact3, size = 20)
-                    ])
-                    
-        return a
-    def grafics_fact_cont(self):  
-        b = ft.Container(content = ft.Row(controls = [self.grafics_fact1(), self.grafics_fact2(), self.grafics_fact3()], alignment = ft.MainAxisAlignment.SPACE_AROUND))
-        b.alignment = ft.alignment.center
-        a = ft.Container(content = ft.Card(content =  b), width = 4000) 
-        a.alignment = ft.alignment.bottom_left
-        return a
+
     
     def show_graphics(self):
         return ft.Column( controls = [
@@ -848,8 +823,7 @@ class Routes():
             self.grafics_card2(),
             ft.Row(controls=[self.graph_1,
                                 self.graph_2,
-                                self.graph_3]),
-                                self.grafics_fact_cont(),
+                                self.graph_3])
         ])
     
     
@@ -1144,8 +1118,7 @@ class Routes():
             )
 
     def login_form(self):
-    
-        
+
         base_color = ft.colors.PRIMARY_CONTAINER
         if self.d_or_l != 'dark':
             base_color = ft.colors.PRIMARY
@@ -1255,8 +1228,7 @@ class Routes():
         
     def upload(self):
 
-        titleCard = ft.Container(content = ft.Card(content=ft.Row(controls = [ft.Text('  Введите данные для авторизации  ', size = 25, text_align = ft.TextAlign.CENTER)]),width = 442, height = 60), width = 4000)
-        titleCard.alignment = ft.alignment.center
+
         form = self.login_form()
 
     
@@ -1268,11 +1240,9 @@ class Routes():
 
         
         controls = [
-                ft.Container(content = ft.Text(''), margin = 70, bgcolor = ft.colors.RED),
                 self.topAppBar("Загрузка файлов"),
-                titleCard,
-                ft.Text(''),
                 form,
+
                 self.bottomAppBar(),
                 self.sb,
                 self.make_refresh()

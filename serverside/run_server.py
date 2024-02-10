@@ -3,7 +3,7 @@ import sqlite3
 import requests
 import os
 import datetime
-
+from numpy import NaN as nn
 import pandas as pd
 
 import analog_reader
@@ -156,7 +156,111 @@ def files():
 
 @app.route("/cities")
 def cities():
-    return "cities"
+    con =sqlite3.connect("./database.db")
+    cur = con.cursor()
 
+    listik = cur.execute("""SELECT * FROM cities""").fetchall()
+
+    print(listik)
+    result = []
+    for i in listik:
+        result.append(i[2])
+
+    return result
+
+@app.route('/city', methods=["GET"])
+def city():
+
+    city = request.args.get("city")
+    date = request.args.get('date')
+
+    if city == None:
+        return "City and Date must be filled"
+    
+
+    result = analog_reader.read_city_and_date(city,date)
+    if result == []:
+        init_city(city)
+        result = analog_reader.read_city_and_date(city,date)
+        if result == []:
+            return "Error"
+        else:
+            return result
+    else:
+        return result
+
+
+
+def init_city(city):
+    status = 'success'
+    now = datetime.datetime.now()
+    date = datetime.date.today()
+    time = str(now.hour) + ":" +  str(now.minute)
+    date = analog_reader.date_to_bd_date(date)
+    url = 'https://api.openweathermap.org/data/2.5/weather?q='+city+'&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
+    
+    
+    weather_data = requests.get(url=url).json()
+    print(weather_data)
+    temp = weather_data['main']['temp']
+    feels_like = weather_data['main']['feels_like']
+    pressure = weather_data['main']['pressure']
+    humidity = weather_data['main']['humidity']
+    description = weather_data['weather'][0]['description']
+    wind_direction = weather_data['wind']['deg']
+    wind_speed = weather_data['wind']['speed']
+
+    overcast = nn
+    
+    try:
+        analog_reader.write_listframe([date,time,city,
+                                    temp,feels_like,pressure,
+                                    humidity,description,
+                                    wind_direction,wind_speed,overcast])
+    except:
+        status = 'failed'
+    print("Init", status)
+
+
+
+
+
+def init_moscow():
+
+    status = 'success'
+    now = datetime.datetime.now()
+    date = datetime.date.today()
+    time = str(now.hour) + ":" +  str(now.minute)
+    date = analog_reader.date_to_bd_date(date)
+    url = 'https://api.openweathermap.org/data/2.5/weather?q=Москва&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
+    
+    
+    weather_data = requests.get(url=url).json()
+    print(weather_data)
+    temp = weather_data['main']['temp']
+    feels_like = weather_data['main']['feels_like']
+    city = 'Москва'
+    pressure = weather_data['main']['pressure']
+    humidity = weather_data['main']['humidity']
+    description = weather_data['weather'][0]['description']
+    wind_direction = weather_data['wind']['deg']
+    wind_speed = weather_data['wind']['speed']
+
+    overcast = nn
+    
+    try:
+        analog_reader.write_listframe([date,time,city,
+                                    temp,feels_like,pressure,
+                                    humidity,description,
+                                    wind_direction,wind_speed,overcast])
+    except:
+        status = 'failed'
+    print("Init", status)
+
+
+
+
+
+init_moscow()
 
 app.run(host='localhost')

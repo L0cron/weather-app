@@ -1,6 +1,24 @@
+import datetime
 import pandas as pd
 import sqlite3
 from numpy import NaN as nn
+
+
+
+
+def read_city_and_date(city,date):
+
+       con = sqlite3.connect('database.db')
+       cur = con.cursor()
+
+
+       result = cur.execute("""SELECT * FROM write WHERE city = ? AND date = ?""", (city,date,)).fetchall()
+
+       if result == None:
+              return None
+       else:
+              return result
+
 
 
 
@@ -34,6 +52,15 @@ def our_dataframe(date,time,city,temp,pressure,humidity,wind_speed,temp_feels_li
        print("Resulting dataframe:",result[:5])
        return result
        
+def write_listframe(listik:list):
+       con = sqlite3.connect("./database.db")
+
+       cur = con.cursor()
+
+       cur.execute("""INSERT INTO write(date,time,city,temp,temp_feels_like,pressure,humidity,description,wind_direction,wind_speed,overcast) VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+                     (listik[0],listik[1],listik[2],listik[3],listik[4],listik[5],listik[6],listik[7],listik[8],listik[9],listik[10],))
+
+       con.commit()
 
 def write_dataframe(df:pd.DataFrame):
        con = sqlite3.connect("./database.db")
@@ -101,3 +128,19 @@ def do_analog_read(test:pd.DataFrame):
        write_dataframe(df)
        print("Файл успешно загружен.")
     
+
+def date_to_bd_date(date:datetime.datetime): # 2024-02-10 YYYY-MM-DD -> (D)D.(M)M.YYYY
+        
+        d = str(date).split('-')
+
+        result = []
+        for i in d:
+            k = i
+            for j in i:
+                if j != '0':
+                    break
+                else:
+                    k = k[1:]
+            result.append(k)
+
+        return '.'.join(result[::-1])
