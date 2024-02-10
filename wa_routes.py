@@ -621,6 +621,16 @@ class Routes():
         
     # Graphics
 
+    temp_fact = ''
+    wet_fact = ''
+    press_fact = ''
+    temp_fact2 = ''
+    wet_fact2 = ''
+    press_fact2 = ''
+    temp_fact3 = ''
+    wet_fact3 = ''
+    press_fact3 = ''
+    
     def graphics(self):
         def filter_(days):
             days = list(date.split(' ') for date in days)
@@ -640,8 +650,27 @@ class Routes():
         temperatures = anime['температура_воздуха_по_сухому_термометру'].values[:90:]
         humidities = anime['относительная_влажность_воздуха'].values[:90:]
         pressures = anime['атмосферное_давление_на_уровне_станции'].values[:90:]
+        
+        if anime['температура_воздуха_по_сухому_термометру'].values[90] > anime['температура_воздуха_по_сухому_термометру'].values[0]:
+            self.temp_fact = 'Общее повышение температуры'
+        else:
+            self.temp_fact = 'Общее понижение температуры'
+        
+        if anime['относительная_влажность_воздуха'].values[90] > anime['относительная_влажность_воздуха'].values[0]:
+            self.wet_fact = 'Общее повышение влажности'
+        else:
+            self.wet_fact = 'Общее понижение влажности'
+            
+        
+        if anime['атмосферное_давление_на_уровне_станции'].values[90] > anime['атмосферное_давление_на_уровне_станции'].values[0]:
+            self.press_fact = 'Общее повышение давления'
+        else:
+            self.press_fact = 'Общее понижение давления'
+            
+            
         datetime_objects = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
         
+
         # Processing data from anime2
         days2 = filter_(anime2['время'].values)
         temperatures2 = anime2['температура_воздуха_по_сухому_термометру'].values[:90:]
@@ -649,6 +678,21 @@ class Routes():
         pressures2 = anime2['атмосферное_давление_на_уровне_станции'].values[:90:]
         datetime_objects2 = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
         
+        if anime2['температура_воздуха_по_сухому_термометру'].values[90] > anime2['температура_воздуха_по_сухому_термометру'].values[0]:
+            self.temp_fact2 = 'Общее повышение температуры'
+        else:
+            self.temp_fact2 = 'Общее понижение температуры'
+        
+        if anime2['относительная_влажность_воздуха'].values[90] > anime2['относительная_влажность_воздуха'].values[0]:
+            self.wet_fact2 = 'Общее повышение влажности'
+        else:
+            self.wet_fact2 = 'Общее понижение влажности' 
+            
+        if anime2['атмосферное_давление_на_уровне_станции'].values[90] > anime2['атмосферное_давление_на_уровне_станции'].values[0]:
+            self.press_fact2 = 'Общее повышение давления'
+        else:
+            self.press_fact2 = 'Общее понижение давления'  
+   
         # Processing data from anime3
         days3 = filter_(anime3['время'].values)
         temperatures3 = anime3['температура_воздуха_по_сухому_термометру'].values[:90:]
@@ -656,6 +700,21 @@ class Routes():
         pressures3 = anime3['атмосферное_давление_на_уровне_станции'].values[:90:]
         datetime_objects3 = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
 
+        if anime3['температура_воздуха_по_сухому_термометру'].values[90] > anime3['температура_воздуха_по_сухому_термометру'].values[0]:
+            self.temp_fact3 = 'Общее повышение температуры'
+        else:
+            self.temp_fact3 = 'Общее понижение температуры'
+        
+        if anime3['относительная_влажность_воздуха'].values[90] > anime3['относительная_влажность_воздуха'].values[0]:
+            self.wet_fact3 = 'Общее повышение влажности'
+        else:
+            self.wet_fact3 = 'Общее понижение влажности' 
+            
+        if anime3['атмосферное_давление_на_уровне_станции'].values[90] > anime3['атмосферное_давление_на_уровне_станции'].values[0]:
+            self.press_fact3 = 'Общее повышение давления'
+        else:
+            self.press_fact3 = 'Общее понижение давления' 
+ 
         # Построение графика с использованием Plotly
         fig = go.Figure()
 
@@ -737,30 +796,60 @@ class Routes():
         
     
     def grafics_card2(self):
-        a = ft.Card(content = ft.Row(
-            controls = [ft.Column( controls = [
-            ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.BLUE, size=30), ft.Text('Температура', size = 30)]),   
+ 
+        a = ft.Container(content = ft.Card(content = ft.Row(
+            controls =
+            [ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.BLUE, size=30), ft.Text('Температура', size = 30)]),   
             ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.RED, size=30), ft.Text('Влажность', size = 30)]),  
-            ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.GREEN, size=30), ft.Text('Давление', size = 30)]),
-            ])
-            ]   
+            ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.GREEN, size=30), ft.Text('Давление', size = 30)])],
+            alignment = ft.MainAxisAlignment.SPACE_AROUND
+               
         ),
-        width = 300
-        )
+        width = 3000,
+        height = 70
+        ))
+        a.alignment = ft.alignment.center
         return a
     
     def grafics_card1(self):
         a = ft.Card(content = ft.Text('Зависимости от времени', text_align = ft.TextAlign.CENTER, size = 30), width = 4000, height = 55)
         return a
-
+    
+    def grafics_fact1(self):
+        a = ft.Column(controls = [
+                        ft.Text(self.temp_fact, size = 20),ft.Text(self.wet_fact, size = 20),ft.Text(self.press_fact, size = 20)
+                    ])
+                    
+        return a
+    
+    def grafics_fact2(self):
+        a =  ft.Column(controls = [
+                        ft.Text(' '+str(self.temp_fact2)+' ', size = 20),ft.Text(' '+str(self.wet_fact2)+' ', size = 20),ft.Text(' '+str(self.press_fact2)+' ', size = 20)
+                    ])
+                    
+        return a
+    
+    def grafics_fact3(self):
+        a =ft.Column(controls = [
+                    ft.Text(self.temp_fact3, size = 20),ft.Text(self.wet_fact3, size = 20),ft.Text(self.press_fact3, size = 20)
+                    ])
+                    
+        return a
+    def grafics_fact_cont(self):  
+        b = ft.Container(content = ft.Row(controls = [self.grafics_fact1(), self.grafics_fact2(), self.grafics_fact3()], alignment = ft.MainAxisAlignment.SPACE_AROUND))
+        b.alignment = ft.alignment.center
+        a = ft.Container(content = ft.Card(content =  b), width = 4000) 
+        a.alignment = ft.alignment.bottom_left
+        return a
     
     def show_graphics(self):
         return ft.Column( controls = [
             self.grafics_card1(),
+            self.grafics_card2(),
             ft.Row(controls=[self.graph_1,
                                 self.graph_2,
                                 self.graph_3]),
-                                self.grafics_card2()
+                                self.grafics_fact_cont(),
         ])
     
     
@@ -1055,7 +1144,8 @@ class Routes():
             )
 
     def login_form(self):
-
+    
+        
         base_color = ft.colors.PRIMARY_CONTAINER
         if self.d_or_l != 'dark':
             base_color = ft.colors.PRIMARY
@@ -1165,7 +1255,8 @@ class Routes():
         
     def upload(self):
 
-
+        titleCard = ft.Container(content = ft.Card(content=ft.Row(controls = [ft.Text('  Введите данные для авторизации  ', size = 25, text_align = ft.TextAlign.CENTER)]),width = 442, height = 60), width = 4000)
+        titleCard.alignment = ft.alignment.center
         form = self.login_form()
 
     
@@ -1177,9 +1268,11 @@ class Routes():
 
         
         controls = [
+                ft.Container(content = ft.Text(''), margin = 70, bgcolor = ft.colors.RED),
                 self.topAppBar("Загрузка файлов"),
+                titleCard,
+                ft.Text(''),
                 form,
-
                 self.bottomAppBar(),
                 self.sb,
                 self.make_refresh()
