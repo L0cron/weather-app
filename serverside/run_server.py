@@ -6,6 +6,8 @@ import datetime
 
 import pandas as pd
 
+import analog_reader
+
 app = Flask("Server")
 app.config['UPLOAD_FOLDER'] = "./uploads"
 ALLOWED_EXTENSIONS = {'csv', 'xlsx'}
@@ -64,42 +66,12 @@ def analyze_file(path:str):
         else:
             df = pd.read_excel(path, index_col=0)
 
-        columns = df.columns
+        analog_reader.do_analog_read(df)
         return 1
     except FileNotFoundError:
+        print("Not found.")
         return -1
-    except:
-        return -2
 
-
-
-
-
-@app.route('/analyze', methods=['GET'])
-def analyze():
-    email = request.args.get('email')
-    password = request.args.get('password')
-    if email != None and password != None:
-        valid = connect_and_sign_in(email,password)
-
-        if valid != False:
-            file = request.args.get("file")
-            if file != None:
-                r = analyze_file("./"+file)
-                if r == 1:
-                    return "Analyzing"
-                elif r == -1:
-                    return "File not found"
-                elif r == -2:
-                    return "Error."
-            else:
-                return "No files provided"
-        else:
-            return "Login Failed"
-        
-
-    else:
-        return "No login provided"
 
 @app.route("/", methods=['GET', 'POST'])
 def innex():
@@ -137,6 +109,7 @@ def innex():
                 print("File saved")
                 
         for j in paths:
+            print("Analyzing:",j)
             analyze_file(j)
         return "Success"
     else:

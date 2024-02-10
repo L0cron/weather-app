@@ -313,6 +313,9 @@ class Routes():
     def do_refresh(self, e):
             print("Refreshing...")
             print('data changed to', self.current_date)
+
+            self.refresher_active = True
+
             if self.active_button == 0:
                 self.goto(self.monitor)
             elif self.active_button == 1:
@@ -324,6 +327,19 @@ class Routes():
             #self.go_to_prediction(e)
             self.page.update()
 
+            # TODO refresh n stuff
+            time.sleep(5)
+            self.refresher_active = False
+            if self.active_button == 0:
+                self.goto(self.monitor)
+            elif self.active_button == 1:
+                self.goto(self.analyze)
+            elif self.active_button == 2:
+                self.goto(self.prediction)
+            elif self.active_button == 3:
+                self.goto(self.upload)
+            #self.go_to_prediction(e)
+            self.page.update()
 
     # Date picker
     current_date = datetime.date.today()
@@ -453,6 +469,7 @@ class Routes():
 
         return [normalColor, normalTxtColor, invColor, invTextColor]
 
+    refresher_active = False
     def bottomAppBar(self)->AppBar:
         hgt = self.bottomABhgt
 
@@ -470,12 +487,25 @@ class Routes():
 
             normalColor = ft.colors.SURFACE_VARIANT
             normalTxtColor = ft.colors.WHITE
+
+        refresher = ft.AlertDialog(
+            modal=True,
+            title=ft.Row(controls=[ft.ProgressRing(width=25, height=25, stroke_width = 2),ft.Text("Обновляем данные...")]),
+            content=ft.Row(controls = [ft.Text("Устанавливаем связь с сервером...")
+            ]),
+            actions_alignment=ft.MainAxisAlignment.END,
+            open=False,
+        )
+
+        if self.refresher_active:
+            refresher.open = True
             
         buttons = [
                         ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor,icon=ft.icons.HOME_ROUNDED, text="Мониторинг", style=regularButtonStyle,expand=True,height=hgt,on_click=self.go_to_monitor),
                         ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor,icon=ft.icons.BAR_CHART_ROUNDED, text="Анализ и Визуализация", style=regularButtonStyle,expand=True,height=hgt,on_click=self.go_to_analyze),
                         ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor, icon=ft.icons.WB_SUNNY_OUTLINED, text="Прогнозирование", style=regularButtonStyle,expand=True,height=hgt, on_click = self.go_to_prediction),
                         ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor, icon=ft.icons.CLOUD_UPLOAD_OUTLINED, text="Загрузка файлов", style=regularButtonStyle,expand=True,height=hgt, on_click=self.go_to_upload),
+                        refresher
         ]
 
         active = self.active_button
@@ -484,6 +514,9 @@ class Routes():
                 buttons[i].color = textColor
                 buttons[i].bgcolor = invColor
                 break
+
+
+        
 
         btmBar= ft.BottomAppBar(
                     height=hgt,
@@ -739,10 +772,8 @@ class Routes():
 
         dlg_modal = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Идёт загрузка..."),
-            content=ft.Row(controls = [ft.Text("Пожалуйста подождите, это займет не более минуты."),
-            #ft.ProgressBar(width=200, height = 10,color="amber", bgcolor="#eeeeee")
-            ft.ProgressRing(width=25, height=25, stroke_width = 2)
+            title=ft.Row(controls=[ft.ProgressRing(width=25, height=25, stroke_width = 2),ft.Text("Идёт загрузка...")]),
+            content=ft.Row(controls = [ft.Text("Пожалуйста подождите, это займет не более минуты.")
             ]),
             actions_alignment=ft.MainAxisAlignment.END,
             open=True,
@@ -1144,9 +1175,9 @@ class Routes():
         if self.login_status == 1:
             form = self.upload_form()
 
+        
         controls = [
                 self.topAppBar("Загрузка файлов"),
-
                 form,
 
                 self.bottomAppBar(),
