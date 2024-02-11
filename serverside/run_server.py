@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, render_template, flash
+from flask import Flask, request, redirect, url_for, render_template, flash, send_file
 import sqlite3
 import requests
 import os
@@ -44,9 +44,6 @@ def add_user_db(email, password):
     cur.execute(f"""INSERT INTO users(email, password) VALUES(?, ?)""", (email, password,))
     con.commit()
 
-def download_file(url):
-    req = requests.request(url=url, method='GET')
-    req
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -95,7 +92,7 @@ def innex():
             print(url)
         print(len(files))
 
-        user_id = valid[1]
+        user_id = valid[0]
 
         paths = []
 
@@ -147,11 +144,6 @@ def innex():
 
 
 
-@app.route('/files', methods=["GET"])
-def files():
-    email = request.args.get('email')
-    password = request.args.get('password')
-
 
 
 @app.route("/cities")
@@ -161,7 +153,6 @@ def cities():
 
     listik = cur.execute("""SELECT * FROM cities""").fetchall()
 
-    print(listik)
     result = []
     for i in listik:
         result.append(i[2])
@@ -183,11 +174,77 @@ def city():
         init_city(city)
         result = analog_reader.read_city_and_date(city,date)
         if result == []:
-            return "Error"
+            return ['None']
         else:
             return result
     else:
         return result
+
+@app.route('/files', methods=['GET'])
+def files():
+    email = request.args.get('email')
+    password = request.args.get('password')
+
+    if email == None or password == None:
+        return "Email and password must be filled"
+    else:
+        valid = connect_and_sign_in(email,password)
+
+        if valid == False:
+            return "failed"
+        
+
+        con = sqlite3.connect("./database.db")
+        cur = con.cursor()
+        user_id = cur.execute("""SELECT id FROM users WHERE email=? AND password=?""",(email,password)).fetchone()[0]
+        print("uid",user_id)
+        user_id = int(user_id)
+
+        listik = cur.execute("""SELECT path FROM data WHERE user_id = ?""", (user_id,)).fetchall()
+        print('listik',listik)
+        return listik
+
+
+
+@app.route("/download", methods=['GET'])
+def download():
+
+    email = request.args.get('email')
+    password = request.args.get('password')
+    path = request.args.get("path")
+
+    if email == None or password == None or path == None:
+        return "Email, password and path must be filled in order to download file from server"
+
+
+    valid = connect_and_sign_in(email,password)
+
+    if valid:
+
+        user_id = int(valid[0])
+        file = './uploads\\' + path
+
+        con = sqlite3.connect("./database.db")
+        cur = con.cursor()
+
+
+        res = cur.execute("""SELECT * FROM data WHERE user_id=? AND path=?""", (user_id,file,)).fetchone()
+
+        if res != None:
+            return send_file(file)
+        else:
+            return "File not found."
+
+
+
+
+
+    else:
+        return "failed"
+
+
+
+
 
 
 
@@ -201,7 +258,6 @@ def init_city(city):
     
     
     weather_data = requests.get(url=url).json()
-    print(weather_data)
     temp = weather_data['main']['temp']
     feels_like = weather_data['main']['feels_like']
     pressure = weather_data['main']['pressure']
@@ -236,7 +292,6 @@ def init_moscow():
     
     
     weather_data = requests.get(url=url).json()
-    print(weather_data)
     temp = weather_data['main']['temp']
     feels_like = weather_data['main']['feels_like']
     city = 'Москва'
