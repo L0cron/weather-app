@@ -1,9 +1,9 @@
 import pandas as pd
 import sqlite3
 
-con = sqlite3.connect('./serverside/database.db')
+con = sqlite3.connect('./database.db')
 
-df = pd.read_csv(r'./serverside/cities.csv', index_col=0)
+df = pd.read_csv(r'./cities.csv', index_col=0)
 
 
 cur = con.cursor()

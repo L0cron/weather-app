@@ -7,8 +7,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 from flet.plotly_chart import PlotlyChart
-import asyncio
-
+import webbrowser
 
 class Routes():
 
@@ -87,6 +86,7 @@ class Routes():
     deg_cel = '℃'
     deg = '°'
 
+
     print1 = ft.Text('', size = 30, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
     print2 = ft.Text('', size = 20,bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
     print3 = ft.Text('', size = 25, color = ft.colors.BLUE_200, bgcolor = ft.colors.with_opacity(0.4, ft.colors.SURFACE_VARIANT))
@@ -135,7 +135,6 @@ class Routes():
         cities = list(cities.json())
         cities.sort()
         self.search_options = [ft.dropdown.Option(i) for i in cities]
-        print(self.search_options)
 
     def search(self):
         #t = ft.Text(self.text)
@@ -173,7 +172,7 @@ class Routes():
         )
 
 
-        var = '0'
+        var = self.temp
         if self.feels_like != None:
             var = self.feels_like
         feels_like = 'Ощущается как ' + var + self.deg_cel
@@ -273,7 +272,7 @@ class Routes():
         return '.'.join(result[::-1])
 
     init_complete = False
-
+    city_found = False
     def do_refresh(self):
         print("Refreshing...")
         print('data changed to', self.current_date)
@@ -314,7 +313,31 @@ class Routes():
                 return
 
         last = requests.get(url=self.webserver_url+"/city", params={"city":city,"date":date}).json()[-1]
-        print(last)
+        print('lastik',last,type(last))
+        if last == 'None':
+            print("Данные отсутствуют")
+            self.temp = '0'
+            self.feels_like = None
+            self.humidity = '0'
+            self.overcast = None
+            self.wind_direction = '0'
+            self.pressure = '0'
+            self.speed = '0'
+            self.city_found = False
+            self.refresher_active = False
+            if self.active_button == 0:
+                self.goto(self.monitor)
+            elif self.active_button == 1:
+                self.graphics()
+                self.goto(self.analyze)
+            elif self.active_button == 2:
+                self.goto(self.prediction)
+            elif self.active_button == 3:
+                self.goto(self.upload)
+            self.page.update()
+            return
+        else:
+            self.city_found = True
 
         for i in range(len(last)):
             if last[i] != None:
@@ -355,6 +378,9 @@ class Routes():
             print(f"Date picker changed, value is {date_picker.value}")
             self.current_date = date_picker.value
             print('data changed to', self.current_date)
+
+            self.do_refresh()
+
             if self.active_button == 0:
                 self.goto(self.monitor)
             elif self.active_button == 1:
@@ -424,10 +450,24 @@ class Routes():
             login_button.icon = ft.icons.LOGOUT
             login_button.on_click = self.logout
         self.page.update()
+
         
-        text = str('Актуально на '+str(self.date_to_bd_date(self.current_date)))
+
+        
+        raw_date = str(self.date_to_bd_date(self.current_date))
+        result_date = []
+        for i in raw_date.split('.'):
+            if len(i) == 1:
+                result_date.append('0' + str(i))
+            else:
+                result_date.append(str(i))
+        result_date = '.'.join(result_date)
+
+        text = str('Актуально на '+result_date)
         if self.init_complete == False:
             text = 'Сервер не отвечает.'
+        elif self.city_found == False:
+            text = 'Данные отсутствуют.'
 
         dateCard = ft.Card(content=ft.Row(controls=[ft.Text('  '),
             ft.Row(controls=[
@@ -831,6 +871,84 @@ class Routes():
     # 0 Не загружены
     # 1 Загружаются
     # 2 Загружены
+
+    predict_from = current_date - datetime.timedelta(days=7)
+    predict_to = current_date
+    
+    def dp_dismiss_from(self, e):
+        self.predict_from = e.control.value
+        print(self.predict_from)
+    def dp_dismiss_to(self, e):
+        self.predict_to = e.control.value
+        print(self.predict_to)
+
+    def subtract_datetime(self, today, days):
+        return today - datetime.timedelta(days=days)
+    # 0 График
+    # 1 Диаграмма
+    graph_type = 0
+
+    def switch_graph(self, e):
+        print(e.control.value)
+        if e.control.value == 'График':
+            self.graph_type = 0
+        elif e.control.value == 'Диаграмма':
+            self.graph_type = 1
+
+    def select_cards(self):
+        dp_from = ft.DatePicker(
+                    #on_change=self.dp_dismiss_from,
+                    on_dismiss=self.dp_dismiss_from,
+                    first_date=datetime.date(1990, 10, 1),
+                    last_date=self.current_date,
+                    value = self.subtract_datetime(self.current_date, 7)
+                )
+        
+        dp_to = ft.DatePicker(
+                    #on_change=self.dp_dismiss_to,
+                    on_dismiss=self.dp_dismiss_to,
+                    first_date=datetime.date(1990, 10, 1),
+                    last_date=self.current_date,
+                    value = self.current_date
+                )
+        self.page.overlay.append(dp_from)
+        self.page.overlay.append(dp_to)
+
+        from_button = ft.ElevatedButton(text=self.date_to_bd_date(self.predict_from), on_click=lambda _: dp_from.pick_date(),
+                                        style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=5))
+        )
+
+
+        to_button = ft.ElevatedButton(text=self.date_to_bd_date(self.predict_to), on_click=lambda _: dp_to.pick_date(),
+                                        style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=5))
+        )
+
+        control = ft.Card(content=ft.Row(controls=[
+            
+            
+            ft.Row(controls=[
+                from_button,
+                ft.Text(" - "),
+                to_button,
+                
+            ]),
+            ft.Dropdown(
+                options=[
+                    ft.dropdown.Option("График"),
+                    ft.dropdown.Option("Диаграмма"),
+                    
+                ],
+                value='График',
+                on_change=self.switch_graph
+            )
+        ],
+        vertical_alignment=ft.MainAxisAlignment.CENTER,
+        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+        ),width=4000, height=100
+        )
+        return control
+
+
     def analyze(self):
 
         dlg_modal = ft.AlertDialog(
@@ -854,6 +972,7 @@ class Routes():
 
         controls = [
                 self.topAppBar("Анализ и визуализация"),
+                self.select_cards(),
                 graphs,
                 self.bottomAppBar(),
                 self.sb,
@@ -886,15 +1005,12 @@ class Routes():
         ])
 
         return control
+
+
+
+
+
     
-    def predict_cards(self):
-        control = ft.Card(content=ft.Row(controls=[
-            ft.Icon(ft.icons.CALENDAR_MONTH_OUTLINED,color=ft.colors.PRIMARY, size=50),
-            ft.Text('Выбранная дата: ' + str(self.current_date)[8:] +'.' +str(self.current_date)[5:7]+'.'+ str(self.current_date)[:4], text_align=ft.TextAlign.CENTER, size = 30)
-        ],
-        alignment=ft.MainAxisAlignment.CENTER
-        ),width=4000, height=130)
-        return control
     
     def prediction(self):
         normalColor = ft.colors.SURFACE_VARIANT
@@ -904,7 +1020,6 @@ class Routes():
 
         controls = [
                 self.topAppBar("Прогнозирование"),
-                self.predict_cards(),
                 self.bottomAppBar(),
                 self.sb,
                 self.make_refresh(),
@@ -1200,10 +1315,61 @@ class Routes():
         self.file_upload_button.disabled = False
         self.page.update()
 
+    def check_files(self):
+
+        r = requests.request(url=self.webserver_url+'/files', method="get", params={"email":self.email,"password":self.password})
+        if r.content == 'failed':
+                self.email = ''
+                self.password = ''
+                print("Неверный логин или пароль")
+                self.login_status = 2
+                self.goto(self.upload)
+
+        else:
+            cont = r.content
+            if cont == '[]':
+                return None
+            else:
+                return r.json()
+            
+
+    def on_download(self, e:ft.ControlEvent):
+        print('Downloading',e.control.data)
+        #r = requests.request(url=self.webserver_url+'/download', method='post', params={"email":self.email, "password":self.password,"path":e.control.data})
+
+        webbrowser.open(self.webserver_url+"/download?email="+self.email+"&password="+self.password+"&path="+e.control.data)
+
     def upload_form(self):
         tp = ft.TextField(label='URL', width=600,max_lines=1,on_change=self.get_file_from_url)
-        your_files = None
-        txt = ft.Text("Здесь пусто")
+    
+
+        chkfiles = self.check_files()
+        
+        txtNone = ft.Text("Здесь пусто")
+        
+
+        txts = []
+        if chkfiles == []:
+            print('No files')
+            txts.append(txtNone)
+        else:
+            print(chkfiles)
+            for i in chkfiles:
+                file = i[0].split('\\')[-1]
+                txt = ft.Card(width=800, content=ft.Row(controls=[
+                    ft.Row(controls=[
+                        ft.Icon(name='insert_drive_file'),
+                        ft.Text(value=file)
+
+                    ]),
+                    ft.IconButton(icon=ft.icons.DOWNLOAD,style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=5), bgcolor=colors.SURFACE_VARIANT),on_click=self.on_download,data=file),
+                    
+                    
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                ))
+                txts.append(txt)
+
         return ft.Column(controls=[
                 self.file_picker_button,
                 ft.Divider(),
@@ -1217,11 +1383,17 @@ class Routes():
                 
                 ft.Divider(),
                 ft.Text("Ваши файлы:"),
-                txt
+                ft.Column(controls=
+                          txts,
+                spacing=5,
+                )
+                
                 
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            width=810
+            width=810,
+            height=550,
+            scroll=ft.ScrollMode.ALWAYS
             )
             
         
