@@ -244,6 +244,40 @@ def download():
 
 
 
+@app.route("/data", methods=['GET'])
+def data():
+    date_from:str= request.args.get('from')
+    date_to:str = request.args.get('to')
+    city:str = request.args.get('city')
+
+    if date_from == None or date_to == None or city == None:
+        return "city, Data_from and data_to must be filled"
+
+
+    date_from:datetime.date = datetime.datetime.strptime(date_from, '%d.%m.%Y')
+    date_to:datetime.date = datetime.datetime.strptime(date_to, '%d.%m.%Y')
+    
+
+    con = sqlite3.connect("./database.db")
+    cur = con.cursor()
+    r = cur.execute("""SELECT * FROM write WHERE city = ?""", (city,)).fetchall()
+
+    print(date_from)
+    print(date_to)
+
+    been = []
+    result = []
+    for i in r:
+        dt = datetime.datetime.strptime(i[1], '%d.%m.%Y')
+
+        if date_to >= dt and dt >= date_from and not i[1] in been:
+            result.append(i)
+            print(i)
+            been.append(i[1])
+
+    print('been',been)
+    return result
+
 
 
 
@@ -278,6 +312,26 @@ def init_city(city):
     print("Init", status)
 
 
+
+
+@app.route('/predict', methods=['GET'])
+def predict():
+
+    date = request.args.get('date')
+
+    if date == None:
+        return "Date should not be None"
+    date = date.split()[0]
+
+    day = datetime.datetime.strptime(date, '%d.%m.%Y').day
+    month = datetime.datetime.strptime(date, '%d.%m.%Y').month
+
+    # Model output:
+    temp = -5.469228904092254 + 0.04938753*day+1.12988844*month
+    humidity = 67.50217518013736 + 0.02686177 * day + 0.79692397 * month
+    pressure = 989.8152541574443-0.03810141 * day  +  0.61799056 * month
+
+    return [temp,humidity,pressure]
 
 
 

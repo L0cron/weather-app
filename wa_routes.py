@@ -121,7 +121,7 @@ class Routes():
 
 
 
-    pb_lst = ['Уведомление 1','Уведомление 2','Уведомление 3']
+    pb_lst = ['Уведомлений нет']
     pb = ft.PopupMenuButton(icon = ft.icons.NOTIFICATIONS_ON_OUTLINED,
         items=[
             ft.PopupMenuItem(
@@ -293,16 +293,43 @@ class Routes():
             self.goto(self.upload)
         self.page.update()
 
-        date = self.date_to_bd_date(self.current_date)
+        if self.active_button != 1:
 
-        city = self.city
+            date = self.date_to_bd_date(self.current_date)
 
-        if self.init_complete == False:
-            try:
-                self.search_init()
-                self.init_complete = True
-            except:
-                print("Сервер не отвечает")
+            city = self.city
+
+            if self.init_complete == False:
+                try:
+                    self.search_init()
+                    self.init_complete = True
+                except:
+                    print("Сервер не отвечает")
+                    self.refresher_active = False
+                    if self.active_button == 0:
+                        self.goto(self.monitor)
+                    elif self.active_button == 1:
+                        self.graphics()
+                        self.goto(self.analyze)
+                    elif self.active_button == 2:
+                        self.goto(self.prediction)
+                    elif self.active_button == 3:
+                        self.goto(self.upload)
+                    self.page.update()
+                    return
+
+            last = requests.get(url=self.webserver_url+"/city", params={"city":city,"date":date}).json()[-1]
+            print('lastik',last,type(last))
+            if last == 'None':
+                print("Данные отсутствуют")
+                self.temp = '0'
+                self.feels_like = None
+                self.humidity = '0'
+                self.overcast = None
+                self.wind_direction = '0'
+                self.pressure = '0'
+                self.speed = '0'
+                self.city_found = False
                 self.refresher_active = False
                 if self.active_button == 0:
                     self.goto(self.monitor)
@@ -315,46 +342,24 @@ class Routes():
                     self.goto(self.upload)
                 self.page.update()
                 return
+            else:
+                self.city_found = True
 
-        last = requests.get(url=self.webserver_url+"/city", params={"city":city,"date":date}).json()[-1]
-        print('lastik',last,type(last))
-        if last == 'None':
-            print("Данные отсутствуют")
-            self.temp = '0'
-            self.feels_like = None
-            self.humidity = '0'
-            self.overcast = None
-            self.wind_direction = '0'
-            self.pressure = '0'
-            self.speed = '0'
-            self.city_found = False
-            self.refresher_active = False
-            if self.active_button == 0:
-                self.goto(self.monitor)
-            elif self.active_button == 1:
-                self.graphics()
-                self.goto(self.analyze)
-            elif self.active_button == 2:
-                self.goto(self.prediction)
-            elif self.active_button == 3:
-                self.goto(self.upload)
-            self.page.update()
-            return
-        else:
-            self.city_found = True
+            for i in range(len(last)):
+                if last[i] != None:
+                    last[i] = str(last[i])
 
-        for i in range(len(last)):
-            if last[i] != None:
-                last[i] = str(last[i])
+            self.temp = last[4]
+            self.feels_like = last[5]
+            self.pressure = last[6]
+            self.humidity = last[7]
+            self.description = last[8]
+            self.wind_direction = last[9]
+            self.speed = last[10]
+            self.overcast = last[11]
 
-        self.temp = last[4]
-        self.feels_like = last[5]
-        self.pressure = last[6]
-        self.humidity = last[7]
-        self.description = last[8]
-        self.wind_direction = last[9]
-        self.speed = last[10]
-        self.overcast = last[11]
+        else: # If in analyze, refresh graphics to current date
+            self.graphics()
 
 
         self.refresher_active = False
@@ -604,6 +609,14 @@ class Routes():
             self.goto(self.upload, True)
         self.page.update()
     
+    export_path = './'
+    def change_export_path(self, e):
+        val = e.control.value
+        if val[-1] != '\\':
+            val+='\\'
+        self.export_path = val
+        print(self.export_path)
+
     def go_to_settings(self, e):
         self.page.go("/settings")
         self.page.views.append(
@@ -612,7 +625,11 @@ class Routes():
                     [
                         AppBar(title=Text("Настройки"), bgcolor=colors.SURFACE_VARIANT),
                         ElevatedButton(icon = ft.icons.WB_SUNNY_OUTLINED, text = 'Сменить тему', height = 50, width = 200, on_click = self.change_theme_),
-                        ft.Switch(label="Уведомления", value=True,thumb_color=ft.colors.PRIMARY,track_color=ft.colors.SURFACE_VARIANT,on_change=self.set_notifications)
+                        ft.Switch(label="Уведомления", value=True,thumb_color=ft.colors.PRIMARY,track_color=ft.colors.SURFACE_VARIANT,on_change=self.set_notifications),
+                        ft.Column(controls=[
+                            ft.Text('Путь для экспорта'),
+                            ft.TextField(value=self.export_path, on_change=self.change_export_path)
+                        ])
                     ],
                 )
             )
@@ -677,22 +694,23 @@ class Routes():
     # Graphics
 
     def graphics(self):
-        def filter_(days):
-            days = list(date.split(' ') for date in days)
-            woof_days = []
-            for i in days:
-                a = i[1].replace('.', '-')
-                woof_days.append(a + ' ' + i[0])
-            return woof_days
-        
-        # Reading CSV files into Pandas DataFrames
-        anime = pd.read_csv('./serverside/sanya/1.csv', low_memory=False, index_col=0, sep=',')
+
+
+        r = requests.request(url=self.webserver_url+'/data', method='GET', params={'city':self.city, 'from':self.date_to_bd_date(self.graph_from),
+                                                                                    'to':self.date_to_bd_date(self.graph_to)}).json()
+
         
         # Processing data from anime
-        days = filter_(anime['время'].values)
-        temperatures = anime['температура_воздуха_по_сухому_термометру'].values[:90:]
-        humidities = anime['относительная_влажность_воздуха'].values[:90:]
-        pressures = anime['атмосферное_давление_на_уровне_станции'].values[:90:]
+        days = []
+        temperatures = []
+        humidities = []
+        pressures = []
+
+        for i in r:
+            days.append(i[1])
+            temperatures.append(i[4])
+            humidities.append(i[7])
+            pressures.append(i[6])
         
         '''
         if anime['температура_воздуха_по_сухому_термометру'].values[90] > anime['температура_воздуха_по_сухому_термометру'].values[0]:
@@ -712,7 +730,7 @@ class Routes():
             self.press_fact = 'Общее понижение давления'
         '''
             
-        datetime_objects = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
+        datetime_objects = [datetime.datetime.strptime(dt_string, '%d.%m.%Y') for dt_string in days]
         
 
         # Построение графика с использованием Plotly
@@ -780,23 +798,23 @@ class Routes():
         self.page.update()
         
     def diograms(self):
-        def filter_(days):
-            days = list(date.split(' ') for date in days)
-            woof_days = []
-            for i in days:
-                a = i[1].replace('.', '-')
-                woof_days.append(a + ' ' + i[0])
-            return woof_days
+        r = requests.request(url=self.webserver_url+'/data', method='GET', params={'city':self.city, 'from':self.date_to_bd_date(self.graph_from),
+                                                                                    'to':self.date_to_bd_date(self.graph_to)}).json()
+
         
-        # Reading CSV files into Pandas DataFrames
-        anime = pd.read_csv('./serverside/sanya/1.csv', low_memory=False, index_col=0, sep=',')
+        # Processing data from anime
+        days = []
+        temperatures = []
+        humidities = []
+        pressures = []
+
+        for i in r:
+            days.append(i[1])
+            temperatures.append(i[4])
+            humidities.append(i[7])
+            pressures.append(i[6])
                 
-        days = filter_(anime['время'].values)
-        temperatures = anime['температура_воздуха_по_сухому_термометру'].values[:90:2]
-        humidities = anime['относительная_влажность_воздуха'].values[:90:2]
-        pressures = anime['атмосферное_давление_на_уровне_станции'].values[:90:2]
-                
-        datetime_objects = [datetime.datetime.strptime(dt_string, '%d-%m-%Y %H:%M') for dt_string in days][:90:]
+        datetime_objects = [datetime.datetime.strptime(dt_string, '%d.%m.%Y') for dt_string in days]
                         
         fig = go.Figure()
 
@@ -863,7 +881,7 @@ class Routes():
  
         a = ft.Container(content = ft.Card(content = ft.Row(
             controls =
-            [ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.BLUE, size=30), ft.Text('Температура', size = 30)]),   
+            [ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.PURPLE_ACCENT, size=30), ft.Text('Температура', size = 30)]),   
             ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.RED, size=30), ft.Text('Влажность', size = 30)]),  
             ft.Row(controls = [ ft.Icon(name=ft.icons.CIRCLE, color=ft.colors.GREEN, size=30), ft.Text('Давление', size = 30)])],
             alignment = ft.MainAxisAlignment.SPACE_AROUND
@@ -904,18 +922,24 @@ class Routes():
     # 1 Загружаются
     # 2 Загружены
 
-    predict_from = current_date - datetime.timedelta(days=7)
-    predict_to = current_date
+    graph_from = datetime.datetime.strptime('01.01.2022', '%d.%m.%Y')
+    graph_to = datetime.datetime.strptime('31.01.2022', '%d.%m.%Y')
     
     def dp_dismiss_from(self, e):
-        self.predict_from = e.control.value
-        print(self.predict_from)
+        self.graph_from = e.control.value
+        self.goto(self.analyze)
+        self.page.update()
+        print(self.graph_from)
     def dp_dismiss_to(self, e):
-        self.predict_to = e.control.value
-        print(self.predict_to)
+        self.graph_to = e.control.value
+        self.goto(self.analyze)
+        self.page.update()
+        print(self.graph_to)
 
     def subtract_datetime(self, today, days):
         return today - datetime.timedelta(days=days)
+    def sum_datetime(self, today, days):
+        return today + datetime.timedelta(days=days)
     # 0 График
     # 1 Диаграмма
     graph_type = 0
@@ -953,16 +977,16 @@ class Routes():
             
     def select_cards(self):
         dp_from = ft.DatePicker(
-                    #on_change=self.dp_dismiss_from,
-                    on_dismiss=self.dp_dismiss_from,
+                    on_change=self.dp_dismiss_from,
+                    # on_dismiss=self.dp_dismiss_from,
                     first_date=datetime.date(1990, 10, 1),
                     last_date=self.current_date,
                     value = self.subtract_datetime(self.current_date, 7)
                 )
         
         dp_to = ft.DatePicker(
-                    #on_change=self.dp_dismiss_to,
-                    on_dismiss=self.dp_dismiss_to,
+                    on_change=self.dp_dismiss_to,
+                    # on_dismiss=self.dp_dismiss_to,
                     first_date=datetime.date(1990, 10, 1),
                     last_date=self.current_date,
                     value = self.current_date
@@ -970,13 +994,15 @@ class Routes():
         self.page.overlay.append(dp_from)
         self.page.overlay.append(dp_to)
 
-        from_button = ft.ElevatedButton(text=self.date_to_bd_date(self.predict_from), on_click=lambda _: dp_from.pick_date(),
-                                        style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=5))
+        from_button = ft.ElevatedButton(text=self.date_to_bd_date(self.graph_from), on_click=lambda _: dp_from.pick_date(),
+                                        style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=5)),
+                                        height=75,width=150
         )
 
 
-        to_button = ft.ElevatedButton(text=self.date_to_bd_date(self.predict_to), on_click=lambda _: dp_to.pick_date(),
-                                        style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=5))
+        to_button = ft.ElevatedButton(text=self.date_to_bd_date(self.graph_to), on_click=lambda _: dp_to.pick_date(),
+                                        style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=5)),
+                                        height=75,width=150
         )
         if self.graph_type == 1:
             val = 'Диаграмма'
@@ -988,10 +1014,12 @@ class Routes():
             
             ft.Row(controls=[
                 from_button,
-                ft.Text(" - "),
+                ft.Text("-",
+                        text_align=ft.TextAlign.CENTER,scale=2
+                ),
                 to_button,
                 
-            ]),
+            ],vertical_alignment=ft.MainAxisAlignment.CENTER),
             ft.Dropdown(
                 options=[
                     ft.dropdown.Option("График"),
@@ -1004,7 +1032,7 @@ class Routes():
         ],
         vertical_alignment=ft.MainAxisAlignment.CENTER,
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-        ),width=4000, height=100
+        ),width=4000, height=75
         )
         return control
 
@@ -1079,26 +1107,57 @@ class Routes():
             
     # Prediction and GOTO prediction
         
-   
-        
-    def predict_control(self):
-        control = ft.Column(controls=[
-            ft.ElevatedButton(text="Вызвать уведомление", on_click=self.notify_user)
-        ])
+    predicted = []
+    last_predicted = current_date
+    def do_prediction(self, days):
 
-        return control
+        date = self.last_predicted
+        for i in range(days):
+            r = requests.request(url=self.webserver_url+"/predict", method='GET', params={'date':self.date_to_bd_date(date)}).json()
 
+            self.predicted.append([self.date_to_bd_date(date),r[0],r[1],r[2]])
+            date = self.sum_datetime(date,1)
+            self.goto(self.prediction)
+        self.last_predicted = date
 
+    def predict_day(self,e):
+        self.do_prediction(1)
 
+    def predict_week(self,e):
+        self.do_prediction(7)
 
-
+    def predict_month(self,e):
+        self.do_prediction(31)
     
-    
+    def on_export_click(self, e):
+        df = pd.DataFrame(columns=['Дата', 'Температура', 'Влажность', 'Давление'])
+
+
+        for i in range(len(self.predicted)):
+            df.loc[i+1] = [self.predicted[i][0],self.predicted[i][1],self.predicted[i][2],self.predicted[i][3]]
+
+        df.to_csv(self.export_path+str(int(datetime.datetime.now().timestamp()))+'.csv')
     def prediction(self):
         normalColor = ft.colors.SURFACE_VARIANT
         normalTxtColor = ft.colors.PRIMARY
-        regularButtonStyle = ft.ButtonStyle(shape=ft.BeveledRectangleBorder(radius=0))
+        
         hgt = self.bottomABhgt
+
+        rows = [ft.Row(controls=[
+                        ft.Text('            Дата', text_align=ft.TextAlign.LEFT, size = 30),
+                        ft.Text('Температура', text_align=ft.TextAlign.LEFT, size = 30),
+                        ft.Text('Влажность ', text_align=ft.TextAlign.LEFT, size = 30),
+                        ft.Text('Давление', text_align=ft.TextAlign.LEFT, size = 30)
+                    ],alignment=ft.MainAxisAlignment.SPACE_EVENLY)]
+
+        for i in self.predicted:
+            r = ft.Row(controls=[
+                        ft.Text(i[0], text_align=ft.TextAlign.LEFT, size = 30),
+                        ft.Text(round(float(i[1]),3), text_align=ft.TextAlign.LEFT, size = 30),
+                        ft.Text('   '+str(round(float(i[2]),3)), text_align=ft.TextAlign.LEFT, size = 30),
+                        ft.Text('  '+str(round(float(i[3]),3)), text_align=ft.TextAlign.LEFT, size = 30)
+                    ],alignment=ft.MainAxisAlignment.SPACE_EVENLY)
+            rows.append(r)
 
         controls = [
                 self.topAppBar("Прогнозирование"),
@@ -1106,9 +1165,20 @@ class Routes():
                 self.sb,
                 self.make_refresh(),
                 ft.Row(controls = [
-                ft.ElevatedButton(color=normalTxtColor,bgcolor=normalColor, icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на завтра",expand=True,height=hgt, style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)),),
-                ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor,icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на неделю", style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)),expand=True,height=hgt),
-                ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor, icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на месяц", style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)), expand=True,height=hgt)])
+                    ft.ElevatedButton(color=normalTxtColor,bgcolor=normalColor, icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на день",expand=True,height=hgt, style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)),on_click=self.predict_day),
+                    ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor,icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на неделю", style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)),expand=True,height=hgt,on_click=self.predict_week),
+                    ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor, icon=ft.icons.DATE_RANGE_OUTLINED, text="Предсказать на месяц", style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)), expand=True,height=hgt,on_click=self.predict_month),
+                    ft.ElevatedButton(color=normalTxtColor, bgcolor=normalColor, icon=ft.icons.DOWNLOAD, text="Экспорт данных", style=ft.ButtonStyle(shape= ft.RoundedRectangleBorder(radius=20)), expand=True,height=hgt,on_click=self.on_export_click)
+                ]),
+
+                
+                ft.Column(width = 800, controls = rows,
+                horizontal_alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                alignment=ft.MainAxisAlignment.CENTER,
+                height=480,
+                scroll=ft.ScrollMode.ALWAYS
+                )
+                
                 ]
         self.page.update()
         return controls
