@@ -254,10 +254,24 @@ class Routes():
         horizontal_alignment=ft.CrossAxisAlignment.START,
         width=3200)
         
+        mon = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря']
+        mon_ind = int(str(datetime.datetime.now())[5:7])
+        freeCard = ft.Card(content = ft.Column(
+            controls = [
+                        ft.Row(controls = [
+                        ft.Text(' ' + self.city, size = 50, color = ft.colors.PRIMARY),ft.Text(' ' + str(datetime.datetime.now())[11:-10], size = 50)]),
+                        ft.Text(' Сегодня ' + str(self.current_date)[-2:] +' '+ mon[mon_ind-1]+ ' ' + str(self.current_date)[:4] + ' года', size = 30),
+                        ft.Text(' Температура ' + self.temp + str(self.deg_cel), size = 30)
+            ]
+        ), width = 450, height = 560)
 
 
-        return d
+        c = ft.Row(controls = [freeCard, d])
+
+
+        return c
     
+
     def date_to_bd_date(self, date:datetime.datetime): # 2024-02-10 YYYY-MM-DD -> (D)D.(M)M.YYYY
         
         d = str(date).split()[0].split('-')
