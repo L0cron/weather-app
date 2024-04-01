@@ -1,3 +1,4 @@
+import pymorphy3
 import time
 import flet as ft
 from flet import AppBar, ElevatedButton, Page, Text, View, colors, NavigationDestination
@@ -10,7 +11,7 @@ from flet.plotly_chart import PlotlyChart
 import webbrowser
 
 class Routes():
-
+    morph = pymorphy3.MorphAnalyzer()
     webserver_url = 'http://localhost:5000'
 
     # User login
@@ -161,11 +162,12 @@ class Routes():
         return dd
     
 
-    
+    def city_to_RP(self, city:str):
+        return self.morph.parse(city.lower())[0].inflect({'loct'}).word.capitalize()
 
     def cards(self):
 
-        temp = 'Температура на данный момент равняется ' + self.temp + self.deg_cel
+        temp = 'Сейчас в '+ self.city_to_RP(self.city)+" " + str(int(float(self.temp))) + self.deg_cel
 
 
 
@@ -179,7 +181,7 @@ class Routes():
         var = self.temp
         if self.feels_like != None:
             var = self.feels_like
-        feels_like = 'Ощущается как ' + var + self.deg_cel
+        feels_like = 'Ощущается как ' + str(int(float(var))) + self.deg_cel
         
 
         tempfeelsCard = ft.Column(width = 3200, controls=[
@@ -330,6 +332,7 @@ class Routes():
                     elif self.active_button == 3:
                         self.goto(self.upload)
                     self.page.update()
+                    self.refresher_active = False
                     return
 
             last = requests.get(url=self.webserver_url+"/city", params={"city":city,"date":date}).json()[-1]
