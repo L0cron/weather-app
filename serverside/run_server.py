@@ -5,7 +5,7 @@ import os
 import datetime
 from numpy import NaN as nn
 import pandas as pd
-
+import random
 import analog_reader
 
 app = Flask("Server")
@@ -312,7 +312,9 @@ def init_city(city):
     print("Init", status)
 
 
-
+def normalize_data(city,temp,pressure,humidity,wind_direction,wind_speed,dt):
+    
+    pass
 
 @app.route('/predict', methods=['GET'])
 def predict():
@@ -327,9 +329,14 @@ def predict():
     month = datetime.datetime.strptime(date, '%d.%m.%Y').month
 
     # Model output:
-    temp = -5.469228904092254 + 0.04938753*day+1.12988844*month
-    humidity = 67.50217518013736 + 0.02686177 * day + 0.79692397 * month
-    pressure = 989.8152541574443-0.03810141 * day  +  0.61799056 * month
+    leto = 4.5
+    temp = -5.469228904092254 + leto*0.04938753*day+1.12988844*month +random.randint(3,12)
+    humidity = 67.50217518013736 + leto*0.02686177 * day + 0.79692397 * month +  random.randint(-30,10)
+    pressure = 989.8152541574443-0.03810141 * day*leto  +  0.61799056 * month -  random.randint(-100,300)
+
+
+
+
 
     return [temp,humidity,pressure]
 

@@ -162,6 +162,10 @@ class Routes():
         return dd
     
 
+    
+
+
+
     def city_to_RP(self, city:str):
         return self.morph.parse(city.lower())[0].inflect({'loct'}).word.capitalize()
 
@@ -262,7 +266,7 @@ class Routes():
             controls = [
                         ft.Row(controls = [
                         ft.Text(' ' + self.city, size = 50, color = ft.colors.PRIMARY),ft.Text(' ' + str(datetime.datetime.now())[11:-10], size = 50)]),
-                        ft.Text(' Сегодня ' + str(self.current_date)[-2:] +' '+ mon[mon_ind-1]+ ' ' + str(self.current_date)[:4] + ' года', size = 30),
+                        ft.Text(' Сегодня ' + str(self.display_date.split('.')[0]) +' '+ mon[mon_ind-1]+ ' ' + str(self.current_date)[:4] + ' года', size = 30),
                         ft.Text(' Температура ' + self.temp + str(self.deg_cel), size = 30)
             ]
         ), width = 450, height = 560)
@@ -488,7 +492,7 @@ class Routes():
             else:
                 result_date.append(str(i))
         result_date = '.'.join(result_date)
-
+        self.display_date = result_date
         text = str('Актуально на '+result_date)
         if self.init_complete == False:
             text = 'Сервер не отвечает.'
